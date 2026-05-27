@@ -30,7 +30,7 @@ struct StatsView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             HStack(spacing: 16) {
-                                StatCard(title: "AVG BLOCKS", value: "\(viewModel.avgBlocksPerGame)", icon: "chart.bar.fill", color: .cyan)
+                                StatCard(title: "BLOCKS/GAME", value: "\(viewModel.avgBlocksPerGame)", icon: "chart.bar.fill", color: .cyan)
                                 StatCard(title: "LINES/GAME", value: "\(viewModel.linesPerGame)", icon: "arrow.up.right.circle.fill", color: .mint)
                             }
                         }

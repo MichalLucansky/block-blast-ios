@@ -5,7 +5,8 @@ struct GridComponent: View {
     let selectedBlock: BlockShape?
     let previewPosition: (row: Int, col: Int)?
     let canPlaceAtPreview: Bool
-    let linesCleared: Set<Int>
+    let linesClearedRows: Set<Int>
+    let linesClearedCols: Set<Int>
     let showAnimation: Bool
     let onTap: (Int, Int) -> Void
     
@@ -18,7 +19,7 @@ struct GridComponent: View {
                             color: grid.cells[row][col],
                             isPreview: isPreviewCell(row, col),
                             canPlace: canPlaceAtPreview,
-                            isCleared: linesCleared.contains(row),
+                            isCleared: linesClearedRows.contains(row) || linesClearedCols.contains(col),
                             showAnimation: showAnimation
                         )
                         .aspectRatio(1, contentMode: .fit)
@@ -46,7 +47,7 @@ struct GridComponent: View {
 }
 
 struct CellView: View {
-    let color: Color?
+    let color: BlockColor?
     let isPreview: Bool
     let canPlace: Bool
     let isCleared: Bool
@@ -55,7 +56,7 @@ struct CellView: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 4)
             .fill(
-                color ?? (isPreview ? (canPlace ? Color.green.opacity(0.5) : Color.red.opacity(0.5)) : Color(.systemGray4))
+                color?.swiftUIColor ?? (isPreview ? (canPlace ? Color.green.opacity(0.5) : Color.red.opacity(0.5)) : Color(.systemGray4))
             )
             .overlay {
                 if isCleared && showAnimation {

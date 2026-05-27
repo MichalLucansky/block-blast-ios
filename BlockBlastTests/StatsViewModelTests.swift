@@ -7,8 +7,7 @@ final class StatsViewModelTests: XCTestCase {
     
     private var userDefaults: UserDefaults!
     private var storage: GameStorageManager!
-    
-    private var viewModel: StatsViewModel { Container.shared.statsViewModel() }
+    private var vm: StatsViewModel!
     
     override func setUp() {
         super.setUp()
@@ -16,10 +15,12 @@ final class StatsViewModelTests: XCTestCase {
         userDefaults = UserDefaults(suiteName: UUID().uuidString)!
         storage = GameStorageManager(userDefaults: userDefaults)
         Container.shared.gameStorageManager.register { self.storage }
-        Container.shared.statsViewModel.register { StatsViewModel() }
+        Container.shared.statsViewModel.register { StatsViewModel() }.singleton
+        vm = Container.shared.statsViewModel()
     }
     
     override func tearDown() {
+        vm = nil
         storage = nil
         userDefaults = nil
         Container.shared.reset()
@@ -27,34 +28,45 @@ final class StatsViewModelTests: XCTestCase {
     }
     
     func test_init_defaultState() {
-        XCTAssertEqual(viewModel.highScore, 0)
-        XCTAssertEqual(viewModel.gamesPlayed, 0)
-        XCTAssertEqual(viewModel.totalBlocksPlaced, 0)
-        XCTAssertEqual(viewModel.totalLinesCleared, 0)
-        XCTAssertEqual(viewModel.maxCombo, 0)
-    }
-    
-    func test_avgScore_noGames() {
-        XCTAssertEqual(viewModel.avgScore, 0)
+        XCTAssertEqual(vm.highScore, 0)
+        XCTAssertEqual(vm.gamesPlayed, 0)
+        XCTAssertEqual(vm.totalBlocksPlaced, 0)
+        XCTAssertEqual(vm.totalLinesCleared, 0)
+        XCTAssertEqual(vm.maxCombo, 0)
     }
     
     func test_avgBlocksPerGame_noGames() {
-        XCTAssertEqual(viewModel.avgBlocksPerGame, 0)
+        XCTAssertEqual(vm.avgBlocksPerGame, 0)
     }
     
     func test_linesPerGame_noGames() {
-        XCTAssertEqual(viewModel.linesPerGame, 0)
+        XCTAssertEqual(vm.linesPerGame, 0)
+    }
+    
+    func test_storageUpdates_propagateToViewModel() {
+        storage.updateHighScore(100)
+        storage.incrementGamesPlayed()
+        storage.incrementBlocksPlaced(10)
+        storage.incrementLinesCleared(5)
+        storage.updateMaxCombo(3)
+        
+        // storage is @MainActor, so $property emits synchronously
+        XCTAssertEqual(vm.highScore, 100)
+        XCTAssertEqual(vm.gamesPlayed, 1)
+        XCTAssertEqual(vm.totalBlocksPlaced, 10)
+        XCTAssertEqual(vm.totalLinesCleared, 5)
+        XCTAssertEqual(vm.maxCombo, 3)
     }
     
     func test_resetStats() {
         storage.updateHighScore(100)
         storage.incrementGamesPlayed()
         
-        viewModel.resetStats()
-        
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.1))
+        vm.resetStats()
         
         XCTAssertEqual(storage.highScore, 0)
         XCTAssertEqual(storage.gamesPlayed, 0)
+        XCTAssertEqual(vm.highScore, 0)
+        XCTAssertEqual(vm.gamesPlayed, 0)
     }
 }

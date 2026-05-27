@@ -45,6 +45,14 @@ final class GameModelsTests: XCTestCase {
         }
     }
     
+    func test_blockShape_codable() throws {
+        let shape = BlockShape.l3x2
+        let data = try JSONEncoder().encode(shape)
+        let decoded = try JSONDecoder().decode(BlockShape.self, from: data)
+        XCTAssertEqual(decoded.cells, shape.cells)
+        XCTAssertEqual(decoded.color, shape.color)
+    }
+    
     // MARK: - GameGrid
     
     func test_grid_init_empty() {
@@ -144,6 +152,14 @@ final class GameModelsTests: XCTestCase {
         XCTAssertTrue(grid.isEmpty())
     }
     
+    func test_grid_codable() throws {
+        var grid = GameGrid()
+        grid.placeBlock(BlockShape.single, at: 3, col: 3)
+        let data = try JSONEncoder().encode(grid)
+        let decoded = try JSONDecoder().decode(GameGrid.self, from: data)
+        XCTAssertEqual(decoded.cells, grid.cells)
+    }
+    
     // MARK: - BlockHand
     
     func test_hand_generate_hasThreeBlocks() {
@@ -172,5 +188,14 @@ final class GameModelsTests: XCTestCase {
         let hand = BlockHand.generate()
         let ids = Set(hand.blocks.map(\.id))
         XCTAssertEqual(ids.count, 3, "All blocks should have unique IDs")
+    }
+    
+    // MARK: - BlockColor
+    
+    func test_blockColor_codable() throws {
+        let color = BlockColor.purple
+        let data = try JSONEncoder().encode(color)
+        let decoded = try JSONDecoder().decode(BlockColor.self, from: data)
+        XCTAssertEqual(decoded, color)
     }
 }

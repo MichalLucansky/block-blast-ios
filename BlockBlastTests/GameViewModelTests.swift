@@ -7,8 +7,7 @@ final class GameViewModelTests: XCTestCase {
     
     private var userDefaults: UserDefaults!
     private var storage: GameStorageManager!
-    
-    private var viewModel: GameViewModel { Container.shared.gameViewModel() }
+    private var vm: GameViewModel!
     
     override func setUp() {
         super.setUp()
@@ -16,10 +15,12 @@ final class GameViewModelTests: XCTestCase {
         userDefaults = UserDefaults(suiteName: UUID().uuidString)!
         storage = GameStorageManager(userDefaults: userDefaults)
         Container.shared.gameStorageManager.register { self.storage }
-        Container.shared.gameViewModel.register { GameViewModel() }
+        Container.shared.gameViewModel.register { GameViewModel() }.shared
+        vm = Container.shared.gameViewModel()
     }
     
     override func tearDown() {
+        vm = nil
         storage = nil
         userDefaults = nil
         Container.shared.reset()
@@ -29,129 +30,152 @@ final class GameViewModelTests: XCTestCase {
     // MARK: - Initial state
     
     func test_init_defaultState() {
-        XCTAssertTrue(viewModel.grid.isEmpty())
-        XCTAssertEqual(viewModel.score, 0)
-        XCTAssertEqual(viewModel.status, .playing)
-        XCTAssertEqual(viewModel.combo, 0)
-        XCTAssertEqual(viewModel.blocksPlaced, 0)
-        XCTAssertNil(viewModel.selectedBlock)
-        XCTAssertFalse(viewModel.showGameOver)
-        XCTAssertFalse(viewModel.newHighScore)
+        XCTAssertTrue(vm.grid.isEmpty())
+        XCTAssertEqual(vm.score, 0)
+        XCTAssertEqual(vm.status, .playing)
+        XCTAssertEqual(vm.combo, 0)
+        XCTAssertEqual(vm.blocksPlaced, 0)
+        XCTAssertNil(vm.selectedBlock)
+        XCTAssertFalse(vm.showGameOver)
+        XCTAssertFalse(vm.newHighScore)
     }
     
     func test_init_handHasThreeBlocks() {
-        XCTAssertEqual(viewModel.hand.blocks.count, 3)
+        XCTAssertEqual(vm.hand.blocks.count, 3)
     }
     
     // MARK: - startNewGame
     
     func test_startNewGame_resetsState() {
-        viewModel.startNewGame()
-        XCTAssertTrue(viewModel.grid.isEmpty())
-        XCTAssertEqual(viewModel.score, 0)
-        XCTAssertEqual(viewModel.status, .playing)
-        XCTAssertEqual(viewModel.combo, 0)
-        XCTAssertEqual(viewModel.blocksPlaced, 0)
+        vm.startNewGame()
+        XCTAssertTrue(vm.grid.isEmpty())
+        XCTAssertEqual(vm.score, 0)
+        XCTAssertEqual(vm.status, .playing)
+        XCTAssertEqual(vm.combo, 0)
+        XCTAssertEqual(vm.blocksPlaced, 0)
     }
     
     // MARK: - selectBlock
     
     func test_selectBlock_setsSelected() {
-        let block = viewModel.hand.blocks.first!
-        viewModel.selectBlock(block)
-        XCTAssertEqual(viewModel.selectedBlock?.id, block.id)
+        let block = vm.hand.blocks.first!
+        vm.selectBlock(block)
+        XCTAssertEqual(vm.selectedBlock?.id, block.id)
     }
     
     func test_selectBlock_nilCancels() {
-        viewModel.selectBlock(viewModel.hand.blocks.first!)
-        viewModel.selectBlock(nil)
-        XCTAssertNil(viewModel.selectedBlock)
+        vm.selectBlock(vm.hand.blocks.first!)
+        vm.selectBlock(nil)
+        XCTAssertNil(vm.selectedBlock)
     }
     
     // MARK: - tapGridCell
     
     func test_tapGridCell_placesBlock() {
-        let block = viewModel.hand.blocks.first!
-        viewModel.selectBlock(block)
+        let block = vm.hand.blocks.first!
+        vm.selectBlock(block)
         
-        // Find a valid position
-        let pos = findValidPosition(for: block, on: viewModel.grid)!
-        viewModel.tapGridCell(row: pos.row, col: pos.col)
+        let pos = findValidPosition(for: block, on: vm.grid)!
+        vm.tapGridCell(row: pos.row, col: pos.col)
         
-        XCTAssertEqual(viewModel.blocksPlaced, 1)
-        XCTAssertNil(viewModel.selectedBlock)
-        XCTAssertGreaterThan(viewModel.score, 0)
+        XCTAssertEqual(vm.blocksPlaced, 1)
+        XCTAssertNil(vm.selectedBlock)
+        XCTAssertGreaterThan(vm.score, 0)
     }
     
-    func test_tapGridCell_invalidPosition_doesNothing() {
-        let block = viewModel.hand.blocks.first!
-        viewModel.selectBlock(block)
+    func test_tapGridCell_invalidTap_keepsSelection() {
+        let block = vm.hand.blocks.first!
+        vm.selectBlock(block)
         
-        // Try to place at occupied position
-        viewModel.tapGridCell(row: 0, col: 0)
+        // Fill (0,0) so it's invalid
+        vm.grid.placeBlock(BlockShape.single, at: 0, col: 0)
+        vm.tapGridCell(row: 0, col: 0)
         
-        // Should place if valid
-        if viewModel.grid.canPlace(block, at: 0, col: 0) {
-            XCTAssertEqual(viewModel.blocksPlaced, 1)
-        }
+        // Selection should be preserved
+        XCTAssertNotNil(vm.selectedBlock)
+        XCTAssertEqual(vm.selectedBlock?.id, block.id)
+    }
+    
+    func test_tapGridCell_noSelection_doesNothing() {
+        let initialBlocksPlaced = vm.blocksPlaced
+        vm.tapGridCell(row: 0, col: 0)
+        XCTAssertEqual(vm.blocksPlaced, initialBlocksPlaced)
     }
     
     // MARK: - Combo and scoring
     
     func test_placeBlock_incrementsBlocksPlaced() {
-        let block = viewModel.hand.blocks.first!
-        viewModel.selectBlock(block)
-        let pos = findValidPosition(for: block, on: viewModel.grid)!
-        viewModel.tapGridCell(row: pos.row, col: pos.col)
-        XCTAssertEqual(viewModel.blocksPlaced, 1)
+        let block = vm.hand.blocks.first!
+        vm.selectBlock(block)
+        let pos = findValidPosition(for: block, on: vm.grid)!
+        vm.tapGridCell(row: pos.row, col: pos.col)
+        XCTAssertEqual(vm.blocksPlaced, 1)
     }
     
     func test_placeBlock_addsCellCountToScore() {
-        let block = viewModel.hand.blocks.first!
-        viewModel.selectBlock(block)
-        let pos = findValidPosition(for: block, on: viewModel.grid)!
-        viewModel.tapGridCell(row: pos.row, col: pos.col)
-        XCTAssertGreaterThanOrEqual(viewModel.score, block.cellCount)
+        let block = vm.hand.blocks.first!
+        vm.selectBlock(block)
+        let pos = findValidPosition(for: block, on: vm.grid)!
+        vm.tapGridCell(row: pos.row, col: pos.col)
+        XCTAssertGreaterThanOrEqual(vm.score, block.cellCount)
+    }
+    
+    func test_noLinesCleared_resetsCombo() {
+        let block = vm.hand.blocks.first!
+        vm.combo = 5
+        vm.selectBlock(block)
+        let pos = findValidPosition(for: block, on: vm.grid)!
+        vm.tapGridCell(row: pos.row, col: pos.col)
+        XCTAssertEqual(vm.combo, 0)
     }
     
     // MARK: - Line clearing
     
-    func test_completeRow_clearsAndScores() {
-        // Fill a row manually
+    func test_completeRow_clearsAndIncrementsCombo() {
+        // Fill row 0 completely
         var grid = GameGrid()
         for c in 0..<GameGrid.gridSize {
             grid.placeBlock(BlockShape.single, at: 0, col: c)
         }
-        viewModel.grid = grid
+        vm.grid = grid
         
-        // Place a block elsewhere
-        let block = viewModel.hand.blocks.first!
-        viewModel.selectBlock(block)
-        let pos = findValidPosition(for: block, on: viewModel.grid)!
-        viewModel.tapGridCell(row: pos.row, col: pos.col)
+        let block = vm.hand.blocks.first!
+        vm.selectBlock(block)
+        let pos = findValidPosition(for: block, on: vm.grid)!
+        vm.tapGridCell(row: pos.row, col: pos.col)
         
-        // Row 0 should be cleared after animation delay
-        // For synchronous test, check that lines were detected
-        let lines = viewModel.grid.completedLines()
-        // The row should have been cleared already
+        // Combo should increment (not reset) when lines are cleared
+        XCTAssertGreaterThan(vm.combo, 0)
+        // Grid should have the line cleared immediately (model-level)
+        let linesAfter = vm.grid.completedLines()
+        XCTAssertFalse(linesAfter.rows.contains(0))
     }
     
     // MARK: - Game over
     
     func test_endGame_setsGameOver() {
-        viewModel.endGame()
-        XCTAssertEqual(viewModel.status, .gameOver)
-        XCTAssertTrue(viewModel.showGameOver)
+        vm.blocksPlaced = 1
+        vm.endGame()
+        XCTAssertEqual(vm.status, .gameOver)
+        XCTAssertTrue(vm.showGameOver)
     }
     
     func test_endGame_incrementsGamesPlayed() {
-        viewModel.endGame()
+        vm.blocksPlaced = 1
+        vm.endGame()
         XCTAssertEqual(storage.gamesPlayed, 1)
     }
     
+    func test_endGame_noBlocksPlaced_doesNothing() {
+        vm.endGame()
+        XCTAssertEqual(vm.status, .playing)
+        XCTAssertFalse(vm.showGameOver)
+    }
+    
     func test_endGame_updatesHighScore() {
-        viewModel.score = 100
-        viewModel.endGame()
+        vm.score = 100
+        vm.blocksPlaced = 1
+        vm.endGame()
         XCTAssertEqual(storage.highScore, 100)
     }
     
@@ -159,37 +183,38 @@ final class GameViewModelTests: XCTestCase {
     
     func test_emptyHand_generatesNewHand() {
         // Place all 3 blocks
-        for i in 0..<3 {
-            guard let block = viewModel.hand.blocks.first else { break }
-            viewModel.selectBlock(block)
-            if let pos = findValidPosition(for: block, on: viewModel.grid) {
-                viewModel.tapGridCell(row: pos.row, col: pos.col)
+        for _ in 0..<3 {
+            guard let block = vm.hand.blocks.first else { break }
+            vm.selectBlock(block)
+            if let pos = findValidPosition(for: block, on: vm.grid) {
+                vm.tapGridCell(row: pos.row, col: pos.col)
             }
         }
         
         // Hand should be refreshed
-        XCTAssertEqual(viewModel.hand.blocks.count, 3)
+        XCTAssertEqual(vm.hand.blocks.count, 3)
     }
     
     // MARK: - High score
     
     func test_highScore_computedFromStorage() {
         storage.updateHighScore(500)
-        XCTAssertEqual(viewModel.highScore, 500)
+        XCTAssertEqual(vm.highScore, 500)
     }
     
     // MARK: - Computed properties
     
     func test_isGameOver() {
-        XCTAssertFalse(viewModel.isGameOver)
-        viewModel.endGame()
-        XCTAssertTrue(viewModel.isGameOver)
+        XCTAssertFalse(vm.isGameOver)
+        vm.blocksPlaced = 1
+        vm.endGame()
+        XCTAssertTrue(vm.isGameOver)
     }
     
     func test_hasSelectedBlock() {
-        XCTAssertFalse(viewModel.hasSelectedBlock)
-        viewModel.selectBlock(viewModel.hand.blocks.first!)
-        XCTAssertTrue(viewModel.hasSelectedBlock)
+        XCTAssertFalse(vm.hasSelectedBlock)
+        vm.selectBlock(vm.hand.blocks.first!)
+        XCTAssertTrue(vm.hasSelectedBlock)
     }
     
     // MARK: - Helper

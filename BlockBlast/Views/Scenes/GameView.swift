@@ -57,7 +57,8 @@ struct GameView: View {
                 selectedBlock: viewModel.selectedBlock,
                 previewPosition: viewModel.previewPosition,
                 canPlaceAtPreview: viewModel.canPlaceAtPreview,
-                linesCleared: viewModel.linesClearedThisRound,
+                linesClearedRows: viewModel.linesClearedRows,
+                linesClearedCols: viewModel.linesClearedCols,
                 showAnimation: viewModel.showLineClearAnimation,
                 onTap: { row, col in
                     viewModel.tapGridCell(row: row, col: col)

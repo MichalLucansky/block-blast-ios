@@ -39,7 +39,7 @@ struct BlockPreview: View {
                         ForEach(0..<block.width, id: \.self) { col in
                             if block.cells.contains(where: { $0.row == row && $0.col == col }) {
                                 RoundedRectangle(cornerRadius: 2)
-                                    .fill(block.color)
+                                    .fill(block.color.swiftUIColor)
                                     .frame(width: cellSize, height: cellSize)
                             } else {
                                 Color.clear
