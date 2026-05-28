@@ -12,7 +12,7 @@ final class StatsViewModel: ObservableObject {
     @Published var maxCombo: Int = 0
     
     // MARK: - Dependencies
-    @Injected(.gameStorageManager) private var storage: GameStorageManager
+    @Injected(\.gameStorageManager) private var storage: GameStorageManager
     
     private var cancellables = Set<AnyCancellable>()
     
