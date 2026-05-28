@@ -50,7 +50,6 @@ final class StatsViewModelTests: XCTestCase {
         storage.incrementLinesCleared(5)
         storage.updateMaxCombo(3)
         
-        // storage is @MainActor, so $property emits synchronously
         XCTAssertEqual(vm.highScore, 100)
         XCTAssertEqual(vm.gamesPlayed, 1)
         XCTAssertEqual(vm.totalBlocksPlaced, 10)

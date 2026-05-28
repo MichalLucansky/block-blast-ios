@@ -9,6 +9,7 @@ enum UserDefaultsKey: String {
     case maxCombo = "blockblast.maxcombo"
 }
 
+@MainActor
 final class GameStorageManager: ObservableObject {
     @Published private(set) var highScore: Int = 0
     @Published private(set) var gamesPlayed: Int = 0
