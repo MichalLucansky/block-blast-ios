@@ -137,10 +137,12 @@ struct GameGrid: Codable, Equatable {
         self.cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
     }
     
-    mutating func placeBlock(_ shape: BlockShape, at row: Int, col: Int) {
+    func placingBlock(_ shape: BlockShape, at row: Int, col: Int) -> GameGrid {
+        var newGrid = self
         for cell in shape.cells {
-            cells[row + cell.row][col + cell.col] = shape.color
+            newGrid.cells[row + cell.row][col + cell.col] = shape.color
         }
+        return newGrid
     }
     
     func canPlace(_ shape: BlockShape, at row: Int, col: Int) -> Bool {
@@ -178,23 +180,27 @@ struct GameGrid: Codable, Equatable {
         return (rows, cols)
     }
     
-    mutating func clearLines(_ lines: (rows: [Int], cols: [Int])) {
+    func clearingLines(_ lines: (rows: [Int], cols: [Int])) -> GameGrid {
+        var newGrid = self
         for r in lines.rows {
-            cells[r] = Array(repeating: nil, count: Self.gridSize)
+            newGrid.cells[r] = Array(repeating: nil, count: Self.gridSize)
         }
         for c in lines.cols {
             for r in 0..<Self.gridSize {
-                cells[r][c] = nil
+                newGrid.cells[r][c] = nil
             }
         }
+        return newGrid
     }
     
     func isEmpty() -> Bool {
         cells.allSatisfy { row in row.allSatisfy { $0 == nil } }
     }
     
-    mutating func clear() {
-        cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
+    func cleared() -> GameGrid {
+        var newGrid = self
+        newGrid.cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
+        return newGrid
     }
 }
 

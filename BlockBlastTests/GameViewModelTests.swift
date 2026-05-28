@@ -90,7 +90,7 @@ final class GameViewModelTests: XCTestCase {
         vm.selectBlock(block)
         
         // Fill (0,0) so it's invalid
-        vm.grid.placeBlock(BlockShape.single, at: 0, col: 0)
+        vm.grid = vm.grid.placingBlock(BlockShape.single, at: 0, col: 0)
         vm.tapGridCell(row: 0, col: 0)
         
         // Selection should be preserved
@@ -137,7 +137,7 @@ final class GameViewModelTests: XCTestCase {
         // Fill row 0 completely
         var grid = GameGrid()
         for c in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: 0, col: c)
+            grid = grid.placingBlock(BlockShape.single, at: 0, col: c)
         }
         vm.grid = grid
         

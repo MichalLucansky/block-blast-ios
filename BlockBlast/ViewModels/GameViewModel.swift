@@ -65,8 +65,8 @@ final class GameViewModel: ObservableObject {
               let pos = previewPosition,
               grid.canPlace(block, at: pos.row, col: pos.col) else { return }
         
-        // Place the block
-        grid.placeBlock(block, at: pos.row, col: pos.col)
+        // Place the block — assign new grid so @Published fires
+        grid = grid.placingBlock(block, at: pos.row, col: pos.col)
         blocksPlaced += 1
         storage.incrementBlocksPlaced()
         
@@ -86,8 +86,8 @@ final class GameViewModel: ObservableObject {
                 storage.updateMaxCombo(combo)
             }
             
-            // Clear lines immediately in the model
-            grid.clearLines(lines)
+            // Clear lines immediately in the model — assign new grid so @Published fires
+            grid = grid.clearingLines(lines)
             
             // Trigger line clear animation (visual only) — cancellable
             let token = UUID()
