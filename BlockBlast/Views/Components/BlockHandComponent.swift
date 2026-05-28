@@ -3,12 +3,15 @@ import SwiftUI
 struct BlockHandComponent: View {
     let hand: BlockHand
     let selectedBlock: BlockShape?
+    let rotationAngle: Int
     let onSelect: (BlockShape) -> Void
     
     var body: some View {
         HStack(spacing: 20) {
             ForEach(hand.blocks) { block in
-                BlockPreview(block: block, isSelected: selectedBlock?.id == block.id)
+                let isSel = selectedBlock?.id == block.id
+                let display = isSel ? block.rotated(by: rotationAngle) : block
+                BlockPreview(block: display, isSelected: isSel)
                     .frame(maxWidth: .infinity, maxHeight: 80)
                     .onTapGesture {
                         onSelect(block)
@@ -54,5 +57,20 @@ struct BlockPreview: View {
     
     private var cellSize: CGFloat {
         min(12.0, 60.0 / CGFloat(max(block.width, block.height)))
+    }
+}
+
+// MARK: - Rotation helper
+
+extension BlockShape {
+    /// Apply the given rotation angle (0, 90, 180, 270) and return the rotated shape.
+    func rotated(by angle: Int) -> BlockShape {
+        switch angle {
+        case 0: return self
+        case 90: return rotated90Clockwise()
+        case 180: return rotated90Clockwise().rotated90Clockwise()
+        case 270: return rotated90Clockwise().rotated90Clockwise().rotated90Clockwise()
+        default: return self
+        }
     }
 }

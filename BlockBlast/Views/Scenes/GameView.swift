@@ -55,7 +55,7 @@ struct GameView: View {
             // Game grid
             GridComponent(
                 grid: viewModel.grid,
-                selectedBlock: viewModel.selectedBlock,
+                activeBlock: viewModel.activeBlock,
                 previewPosition: viewModel.previewPosition,
                 canPlaceAtPreview: viewModel.canPlaceAtPreview,
                 linesClearedRows: viewModel.linesClearedRows,
@@ -71,6 +71,7 @@ struct GameView: View {
             BlockHandComponent(
                 hand: viewModel.hand,
                 selectedBlock: viewModel.selectedBlock,
+                rotationAngle: viewModel.rotationAngle,
                 onSelect: { block in
                     if viewModel.selectedBlock?.id == block.id {
                         viewModel.cancelPlacement()
@@ -80,6 +81,26 @@ struct GameView: View {
                 }
             )
             .padding(.horizontal)
+            
+            // Rotate button
+            if viewModel.hasSelectedBlock {
+                Button(action: {
+                    viewModel.rotateBlock()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.clockwise")
+                        Text("ROTATE")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal)
+                .transition(.opacity.combined(with: .scale))
+            }
             
             Spacer()
         }

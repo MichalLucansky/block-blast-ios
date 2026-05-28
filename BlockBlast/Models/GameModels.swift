@@ -32,6 +32,16 @@ struct BlockShape: Identifiable, Codable, Equatable {
     var width: Int { cells.map(\.col).max()! + 1 }
     var height: Int { cells.map(\.row).max()! + 1 }
     var cellCount: Int { cells.count }
+    
+    /// Rotate this shape 90° clockwise.
+    /// Formula: new_row = col, new_col = (height - 1) - row
+    func rotated90Clockwise() -> BlockShape {
+        let h = self.height
+        let rotatedCells = self.cells.map { cell in
+            Cell(row: cell.col, col: (h - 1) - cell.row)
+        }
+        return BlockShape(id: self.id, cells: rotatedCells, color: self.color)
+    }
 }
 
 // MARK: - Predefined Block Shapes

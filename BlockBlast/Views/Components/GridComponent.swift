@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GridComponent: View {
     let grid: GameGrid
-    let selectedBlock: BlockShape?
+    let activeBlock: BlockShape? // The rotated shape to preview
     let previewPosition: (row: Int, col: Int)?
     let canPlaceAtPreview: Bool
     let linesClearedRows: Set<Int>
@@ -36,7 +36,7 @@ struct GridComponent: View {
     }
     
     private func isPreviewCell(_ row: Int, _ col: Int) -> Bool {
-        guard let block = selectedBlock, let pos = previewPosition else { return false }
+        guard let block = activeBlock, let pos = previewPosition else { return false }
         for cell in block.cells {
             if row == pos.row + cell.row && col == pos.col + cell.col {
                 // Only render preview cells that don't overlap occupied cells

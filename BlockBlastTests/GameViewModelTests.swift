@@ -219,6 +219,79 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertTrue(vm.hasSelectedBlock)
     }
     
+    // MARK: - Rotation
+    
+    func test_rotateBlock_cyclesAngle() {
+        vm.selectBlock(vm.hand.blocks.first!)
+        XCTAssertEqual(vm.rotationAngle, 0)
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 90)
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 180)
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 270)
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 0)
+    }
+    
+    func test_rotateBlock_withoutSelection_doesNothing() {
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 0)
+    }
+    
+    func test_selectBlock_resetsRotation() {
+        vm.selectBlock(vm.hand.blocks.first!)
+        vm.rotateBlock()
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 180)
+        vm.selectBlock(vm.hand.blocks.last)
+        XCTAssertEqual(vm.rotationAngle, 0)
+    }
+    
+    func test_activeBlock_returnsRotatedShape() {
+        let block = BlockShape.bar1x2H // horizontal 1x2
+        vm.hand = BlockHand(blocks: [block, BlockShape.bar1x2V, BlockShape.single])
+        vm.selectBlock(block)
+        
+        // Unrotated
+        XCTAssertEqual(vm.activeBlock?.width, 2)
+        XCTAssertEqual(vm.activeBlock?.height, 1)
+        
+        // Rotated 90°
+        vm.rotateBlock()
+        XCTAssertEqual(vm.activeBlock?.width, 1)
+        XCTAssertEqual(vm.activeBlock?.height, 2)
+    }
+    
+    func test_placeRotatedBlock_placesCorrectShape() {
+        // Use a vertical bar that won't fit horizontally but will fit rotated
+        let block = BlockShape.bar1x2V // vertical 2x1
+        vm.hand = BlockHand(blocks: [block, BlockShape.single, BlockShape.single])
+        vm.selectBlock(block)
+        
+        // Rotate to horizontal
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 90)
+        
+        // Place it
+        vm.previewPosition = (0, 0)
+        vm.canPlaceAtPreview = true
+        vm.placeBlock()
+        
+        // Should be placed horizontally at (0,0) and (0,1)
+        XCTAssertNotNil(vm.grid.cells[0][0])
+        XCTAssertNotNil(vm.grid.cells[0][1])
+        XCTAssertNil(vm.grid.cells[1][0])
+    }
+    
+    func test_cancelPlacement_resetsRotation() {
+        vm.selectBlock(vm.hand.blocks.first!)
+        vm.rotateBlock()
+        XCTAssertEqual(vm.rotationAngle, 90)
+        vm.cancelPlacement()
+        XCTAssertEqual(vm.rotationAngle, 0)
+    }
+    
     // MARK: - Helper
     
     private func findValidPosition(for block: BlockShape, on grid: GameGrid) -> (row: Int, col: Int)? {

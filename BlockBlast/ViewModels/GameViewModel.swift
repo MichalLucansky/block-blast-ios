@@ -11,6 +11,7 @@ final class GameViewModel: ObservableObject {
     @Published var combo: Int = 0
     @Published var blocksPlaced: Int = 0
     @Published var selectedBlock: BlockShape?
+    @Published var rotationAngle: Int = 0 // 0, 90, 180, 270
     @Published var previewPosition: (row: Int, col: Int)?
     @Published var canPlaceAtPreview: Bool = false
     @Published var showGameOver = false
@@ -31,6 +32,18 @@ final class GameViewModel: ObservableObject {
     
     // MARK: - Computed
     
+    /// The currently selected block with rotation applied.
+    var activeBlock: BlockShape? {
+        guard let block = selectedBlock else { return nil }
+        switch rotationAngle {
+        case 0: return block
+        case 90: return block.rotated90Clockwise()
+        case 180: return block.rotated90Clockwise().rotated90Clockwise()
+        case 270: return block.rotated90Clockwise().rotated90Clockwise().rotated90Clockwise()
+        default: return block
+        }
+    }
+    
     var highScore: Int { storage.highScore }
     var isGameOver: Bool { status == .gameOver }
     var hasSelectedBlock: Bool { selectedBlock != nil }
@@ -45,6 +58,7 @@ final class GameViewModel: ObservableObject {
         blocksPlaced = 0
         status = .playing
         selectedBlock = nil
+        rotationAngle = 0
         previewPosition = nil
         showGameOver = false
         newHighScore = false
@@ -56,12 +70,22 @@ final class GameViewModel: ObservableObject {
     
     func selectBlock(_ block: BlockShape?) {
         selectedBlock = block
+        rotationAngle = 0
+        previewPosition = nil
+        canPlaceAtPreview = false
+    }
+    
+    /// Rotate the selected block 90° clockwise.
+    func rotateBlock() {
+        guard selectedBlock != nil else { return }
+        rotationAngle = (rotationAngle + 90) % 360
         previewPosition = nil
         canPlaceAtPreview = false
     }
     
     func placeBlock() {
-        guard let block = selectedBlock,
+        guard let block = activeBlock,
+              let originalId = selectedBlock?.id,
               let pos = previewPosition,
               grid.canPlace(block, at: pos.row, col: pos.col) else { return }
         
@@ -108,8 +132,9 @@ final class GameViewModel: ObservableObject {
         }
         
         // Remove placed block from hand
-        hand = BlockHand(blocks: hand.blocks.filter { $0.id != block.id })
+        hand = BlockHand(blocks: hand.blocks.filter { $0.id != originalId })
         selectedBlock = nil
+        rotationAngle = 0
         previewPosition = nil
         
         // If hand is empty, generate new hand
@@ -133,13 +158,14 @@ final class GameViewModel: ObservableObject {
     
     func cancelPlacement() {
         selectedBlock = nil
+        rotationAngle = 0
         previewPosition = nil
         canPlaceAtPreview = false
     }
     
     func tapGridCell(row: Int, col: Int) {
         guard status == .playing else { return }
-        guard let block = selectedBlock else { return }
+        guard let block = activeBlock else { return }
         
         // Try each cell in the block shape as the anchor for the tapped position
         // This lets the user tap any cell within the block's footprint

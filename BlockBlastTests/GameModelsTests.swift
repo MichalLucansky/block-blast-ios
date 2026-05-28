@@ -198,4 +198,48 @@ final class GameModelsTests: XCTestCase {
         let decoded = try JSONDecoder().decode(BlockColor.self, from: data)
         XCTAssertEqual(decoded, color)
     }
+    
+    // MARK: - Rotation
+    
+    func test_rotate90_preservesCellCount() {
+        let shape = BlockShape.bar1x3H
+        let rotated = shape.rotated90Clockwise()
+        XCTAssertEqual(shape.cellCount, rotated.cellCount)
+    }
+    
+    func test_rotate90_horizontalToVertical() {
+        let shape = BlockShape.bar1x3H // 3 cells in a row
+        let rotated = shape.rotated90Clockwise()
+        XCTAssertEqual(rotated.width, 1)
+        XCTAssertEqual(rotated.height, 3)
+    }
+    
+    func test_rotate90_verticalToHorizontal() {
+        let shape = BlockShape.bar1x2V // 2 cells in a column
+        let rotated = shape.rotated90Clockwise()
+        XCTAssertEqual(rotated.width, 2)
+        XCTAssertEqual(rotated.height, 1)
+    }
+    
+    func test_rotate360_returnsToOriginal() {
+        let shape = BlockShape.l3x2
+        let full = shape
+            .rotated90Clockwise()
+            .rotated90Clockwise()
+            .rotated90Clockwise()
+            .rotated90Clockwise()
+        XCTAssertEqual(full.cells, shape.cells)
+    }
+    
+    func test_rotate180_symmetric() {
+        let shape = BlockShape.bar2x2
+        let rotated = shape.rotated90Clockwise().rotated90Clockwise()
+        XCTAssertEqual(rotated.cells, shape.cells)
+    }
+    
+    func test_rotate_preservesColor() {
+        let shape = BlockShape.l3x3
+        let rotated = shape.rotated90Clockwise()
+        XCTAssertEqual(rotated.color, shape.color)
+    }
 }
