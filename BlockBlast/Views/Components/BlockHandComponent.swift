@@ -53,6 +53,6 @@ struct BlockPreview: View {
     }
     
     private var cellSize: CGFloat {
-        min(12, 60 / max(block.width, block.height))
+        min(12.0, 60.0 / CGFloat(max(block.width, block.height)))
     }
 }
