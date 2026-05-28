@@ -16,7 +16,7 @@ struct ContentView: View {
                 }
         }
         .onAppear {
-            if gameVM.status == .playing && gameVM.grid.isEmpty() {
+            if gameVM.status == .playing && gameVM.grid.isEmpty() && gameVM.blocksPlaced == 0 {
                 gameVM.startNewGame()
             }
         }

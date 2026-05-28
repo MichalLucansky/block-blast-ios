@@ -55,7 +55,7 @@ extension BlockShape {
         .l3x2, .l3x2Mirror, .l2x3, .l2x3Mirror,
         
         // T shapes
-        .t3x2, .t2x3, .t3x2Up, .t2x3Left,
+        .t3x2, .t2x3, .t3x2Down, .t2x3Right,
         
         // S/Z shapes
         .s3x2, .z3x2, .s2x3, .z2x3,
@@ -98,12 +98,12 @@ extension BlockShape {
     // T shapes
     static let t3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 0)], color: .pink)
     static let t2x3 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 1)], color: .pink)
-    static let t3x2Up = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 0)], color: .mint)
-    static let t2x3Left = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 1)], color: .mint)
+    static let t3x2Down = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 1)], color: .mint)
+    static let t2x3Right = BlockShape(cells: [Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 1, col: 2), Cell(row: 0, col: 1)], color: .mint)
     
     // S/Z shapes
     static let s3x2 = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 0)], color: .cyan)
-    static let z3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 1)], color: .cyan)
+    static let z3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 1)], color: .cyan)
     static let s2x3 = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 0), Cell(row: 1, col: 1)], color: .teal)
     static let z2x3 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 1, col: 1), Cell(row: 1, col: 2)], color: .teal)
     
