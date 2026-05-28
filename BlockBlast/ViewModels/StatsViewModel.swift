@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FactoryKit
 
 @MainActor
 final class StatsViewModel: ObservableObject {
@@ -11,12 +12,11 @@ final class StatsViewModel: ObservableObject {
     @Published var maxCombo: Int = 0
     
     // MARK: - Dependencies
-    private let storage: GameStorageManager
+    @Injected(.gameStorageManager) private var storage: GameStorageManager
     
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        self.storage = Container.shared.gameStorageManager()
         observeStorage()
     }
     

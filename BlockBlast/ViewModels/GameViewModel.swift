@@ -1,4 +1,5 @@
 import Foundation
+import FactoryKit
 
 @MainActor
 final class GameViewModel: ObservableObject {
@@ -19,13 +20,13 @@ final class GameViewModel: ObservableObject {
     @Published var showLineClearAnimation = false
     
     // MARK: - Dependencies
-    private let storage: GameStorageManager
+    @Injected(.gameStorageManager) private var storage: GameStorageManager
     
     /// Token to cancel stale animation timers.
     private var animationToken: UUID?
     
     init() {
-        self.storage = Container.shared.gameStorageManager()
+        // No subscriptions needed — highScore accessed via computed property
     }
     
     // MARK: - Computed
