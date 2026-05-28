@@ -139,16 +139,28 @@ final class GameViewModel: ObservableObject {
     
     func tapGridCell(row: Int, col: Int) {
         guard status == .playing else { return }
-        
         guard let block = selectedBlock else { return }
         
-        // If we have a selected block, try to place it
-        if grid.canPlace(block, at: row, col: col) {
-            previewPosition = (row, col)
-            canPlaceAtPreview = true
-            placeBlock()
+        // Try each cell in the block shape as the anchor for the tapped position
+        // This lets the user tap any cell within the block's footprint
+        var placed = false
+        for cell in block.cells {
+            let anchorRow = row - cell.row
+            let anchorCol = col - cell.col
+            if grid.canPlace(block, at: anchorRow, col: anchorCol) {
+                previewPosition = (anchorRow, anchorCol)
+                canPlaceAtPreview = true
+                placeBlock()
+                placed = true
+                break
+            }
         }
-        // On invalid tap, keep the selection — don't cancel
+        
+        // If we couldn't place, update preview to show invalid position
+        if !placed {
+            previewPosition = (row, col)
+            canPlaceAtPreview = grid.canPlace(block, at: row, col: col)
+        }
     }
     
     func endGame() {
