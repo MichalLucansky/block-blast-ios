@@ -1,0 +1,8 @@
+# macOS
+._*
+.DS_Store
+
+# Xcode
+build/
+*.xcuserdata/
+*.xcworkspace/!xcshareddata/

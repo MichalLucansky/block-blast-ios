@@ -39,7 +39,15 @@ struct GridComponent: View {
         guard let block = selectedBlock, let pos = previewPosition else { return false }
         for cell in block.cells {
             if row == pos.row + cell.row && col == pos.col + cell.col {
-                return true
+                // Only render preview cells that don't overlap occupied cells
+                let gridRow = pos.row + cell.row
+                let gridCol = pos.col + cell.col
+                if gridRow >= 0 && gridRow < GameGrid.gridSize &&
+                   gridCol >= 0 && gridCol < GameGrid.gridSize &&
+                   grid.cells[gridRow][gridCol] == nil {
+                    return true
+                }
+                return false
             }
         }
         return false
