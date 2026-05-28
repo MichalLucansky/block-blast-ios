@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var gameVM = Container.shared.gameViewModel()
-    @StateObject private var statsVM = Container.shared.statsViewModel()
     
     var body: some View {
         TabView {

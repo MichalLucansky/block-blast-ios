@@ -37,7 +37,6 @@ final class StatsViewModel: ObservableObject {
     
     // MARK: - Private
     private func observeStorage() {
-        // storage is @MainActor, so $property emits on main synchronously
         storage.$highScore
             .sink { [weak self] value in
                 self?.highScore = value

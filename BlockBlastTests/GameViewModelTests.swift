@@ -84,7 +84,9 @@ final class GameViewModelTests: XCTestCase {
     }
     
     func test_tapGridCell_invalidTap_keepsSelection() {
-        let block = vm.hand.blocks.first!
+        // Use deterministic block with cell at (0,0)
+        let block = BlockShape.single
+        vm.hand = BlockHand(blocks: [block, BlockShape.bar1x2H, BlockShape.bar1x2V])
         vm.selectBlock(block)
         
         // Fill (0,0) so it's invalid
