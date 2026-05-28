@@ -128,7 +128,7 @@ extension BlockShape {
 
 /// The game grid - 8x8 board.
 struct GameGrid: Codable, Equatable {
-    static let gridSize = 8
+    static var gridSize: Int { 8 }
     
     /// nil = empty, BlockColor = filled
     var cells: [[BlockColor?]]
