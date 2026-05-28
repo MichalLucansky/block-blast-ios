@@ -134,7 +134,7 @@ struct GameGrid: Codable, Equatable {
     var cells: [[BlockColor?]]
     
     init() {
-        self.cells = Array(repeating: Array(repeating: BlockColor?.none, count: gridSize), count: gridSize)
+        self.cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
     }
     
     mutating func placeBlock(_ shape: BlockShape, at row: Int, col: Int) {
@@ -147,7 +147,7 @@ struct GameGrid: Codable, Equatable {
         for cell in shape.cells {
             let r = row + cell.row
             let c = col + cell.col
-            guard r >= 0 && r < gridSize && c >= 0 && c < gridSize else { return false }
+            guard r >= 0 && r < Self.gridSize && c >= 0 && c < Self.gridSize else { return false }
             guard cells[r][c] == nil else { return false }
         }
         return true
@@ -158,15 +158,15 @@ struct GameGrid: Codable, Equatable {
         var rows: [Int] = []
         var cols: [Int] = []
         
-        for r in 0..<gridSize {
+        for r in 0..<Self.gridSize {
             if cells[r].allSatisfy({ $0 != nil }) {
                 rows.append(r)
             }
         }
         
-        for c in 0..<gridSize {
+        for c in 0..<Self.gridSize {
             var complete = true
-            for r in 0..<gridSize {
+            for r in 0..<Self.gridSize {
                 if cells[r][c] == nil {
                     complete = false
                     break
@@ -180,10 +180,10 @@ struct GameGrid: Codable, Equatable {
     
     mutating func clearLines(_ lines: (rows: [Int], cols: [Int])) {
         for r in lines.rows {
-            cells[r] = Array(repeating: nil, count: gridSize)
+            cells[r] = Array(repeating: nil, count: Self.gridSize)
         }
         for c in lines.cols {
-            for r in 0..<gridSize {
+            for r in 0..<Self.gridSize {
                 cells[r][c] = nil
             }
         }
@@ -194,7 +194,7 @@ struct GameGrid: Codable, Equatable {
     }
     
     mutating func clear() {
-        cells = Array(repeating: Array(repeating: BlockColor?.none, count: gridSize), count: gridSize)
+        cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
     }
 }
 
