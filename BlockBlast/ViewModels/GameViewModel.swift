@@ -20,7 +20,7 @@ final class GameViewModel: ObservableObject {
     @Published var showLineClearAnimation = false
     
     // MARK: - Dependencies
-    @Injected(.gameStorageManager) private var storage: GameStorageManager
+    @Injected(\.gameStorageManager) private var storage: GameStorageManager
     
     /// Token to cancel stale animation timers.
     private var animationToken: UUID?
