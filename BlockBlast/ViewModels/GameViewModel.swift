@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 @MainActor
 final class GameViewModel: ObservableObject {
@@ -22,10 +21,11 @@ final class GameViewModel: ObservableObject {
     // MARK: - Dependencies
     @Injected(\.gameStorageManager) private var storage: GameStorageManager
     
-    private var cancellables = Set<AnyCancellable>()
+    /// Token to cancel stale animation timers.
+    private var animationToken: UUID?
     
     init() {
-        observeStorage()
+        // No subscriptions needed — highScore accessed via computed property
     }
     
     // MARK: - Computed
@@ -50,18 +50,13 @@ final class GameViewModel: ObservableObject {
         linesClearedRows = []
         linesClearedCols = []
         showLineClearAnimation = false
+        animationToken = nil
     }
     
     func selectBlock(_ block: BlockShape?) {
         selectedBlock = block
         previewPosition = nil
         canPlaceAtPreview = false
-    }
-    
-    func previewAt(row: Int, col: Int) {
-        guard let block = selectedBlock else { return }
-        previewPosition = (row, col)
-        canPlaceAtPreview = grid.canPlace(block, at: row, col)
     }
     
     func placeBlock() {
@@ -93,18 +88,21 @@ final class GameViewModel: ObservableObject {
             // Clear lines immediately in the model
             grid.clearLines(lines)
             
-            // Trigger line clear animation (visual only)
+            // Trigger line clear animation (visual only) — cancellable
+            let token = UUID()
+            animationToken = token
             linesClearedRows = Set(lines.rows)
             linesClearedCols = Set(lines.cols)
             showLineClearAnimation = true
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                self?.showLineClearAnimation = false
-                self?.linesClearedRows = []
-                self?.linesClearedCols = []
+                guard let self, self.animationToken == token else { return }
+                self.showLineClearAnimation = false
+                self.linesClearedRows = []
+                self.linesClearedCols = []
             }
         } else {
-            // No lines cleared - reset combo
+            // No lines cleared — reset combo
             combo = 0
         }
         
@@ -116,21 +114,20 @@ final class GameViewModel: ObservableObject {
         // If hand is empty, generate new hand
         if hand.blocks.isEmpty {
             hand = BlockHand.generate()
-            if !hand.hasValidMoves(on: grid) {
-                endGame()
-            }
-        } else {
-            // Check if remaining blocks can be placed
-            if !hand.hasValidMoves(on: grid) {
-                endGame()
-            }
         }
         
-        // Update high score
-        if score > storage.highScore {
-            newHighScore = true
+        // Check if remaining blocks can be placed (after hand refresh)
+        if !hand.hasValidMoves(on: grid) {
+            endGame()
         }
-        storage.updateHighScore(score)
+        
+        // Update high score (only when game is still active)
+        if status == .playing {
+            if score > storage.highScore {
+                newHighScore = true
+            }
+            storage.updateHighScore(score)
+        }
     }
     
     func cancelPlacement() {
@@ -142,16 +139,15 @@ final class GameViewModel: ObservableObject {
     func tapGridCell(row: Int, col: Int) {
         guard status == .playing else { return }
         
-        if let block = selectedBlock {
-            // If we have a selected block, try to place it
-            if grid.canPlace(block, at: row, col: col) {
-                previewPosition = (row, col)
-                canPlaceAtPreview = true
-                placeBlock()
-            }
-            // On invalid tap, keep the selection - don't cancel
+        guard let block = selectedBlock else { return }
+        
+        // If we have a selected block, try to place it
+        if grid.canPlace(block, at: row, col: col) {
+            previewPosition = (row, col)
+            canPlaceAtPreview = true
+            placeBlock()
         }
-        // Don't auto-place when nothing is selected
+        // On invalid tap, keep the selection — don't cancel
     }
     
     func endGame() {
@@ -163,11 +159,5 @@ final class GameViewModel: ObservableObject {
         }
         storage.updateHighScore(score)
         showGameOver = true
-    }
-    
-    // MARK: - Private
-    
-    private func observeStorage() {
-        // highScore is accessed via computed property - no subscription needed
     }
 }

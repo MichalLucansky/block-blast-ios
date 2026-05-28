@@ -193,7 +193,7 @@ struct GameGrid: Codable, Equatable {
         cells.allSatisfy { row in row.allSatisfy { $0 == nil } }
     }
     
-    func clear() {
+    mutating func clear() {
         cells = Array(repeating: Array(repeating: BlockColor?.none, count: gridSize), count: gridSize)
     }
 }
