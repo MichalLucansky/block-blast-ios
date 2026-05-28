@@ -1,4 +1,5 @@
 import SwiftUI
+import FactoryKit
 
 struct ContentView: View {
     @StateObject private var gameVM = Container.shared.gameViewModel()
