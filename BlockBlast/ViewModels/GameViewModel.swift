@@ -19,13 +19,13 @@ final class GameViewModel: ObservableObject {
     @Published var showLineClearAnimation = false
     
     // MARK: - Dependencies
-    @Injected(\.gameStorageManager) private var storage: GameStorageManager
+    private let storage: GameStorageManager
     
     /// Token to cancel stale animation timers.
     private var animationToken: UUID?
     
     init() {
-        // No subscriptions needed — highScore accessed via computed property
+        self.storage = Container.shared.gameStorageManager()
     }
     
     // MARK: - Computed
