@@ -156,10 +156,17 @@ final class GameViewModel: ObservableObject {
             }
         }
         
-        // If we couldn't place, update preview to show invalid position
+        // If we couldn't place, only show preview if the block actually fits
         if !placed {
-            previewPosition = (row, col)
-            canPlaceAtPreview = grid.canPlace(block, at: row, col: col)
+            let valid = grid.canPlace(block, at: row, col: col)
+            if valid {
+                previewPosition = (row, col)
+                canPlaceAtPreview = true
+            } else {
+                // Block doesn't fit anywhere near this tap — clear preview
+                previewPosition = nil
+                canPlaceAtPreview = false
+            }
         }
     }
     
