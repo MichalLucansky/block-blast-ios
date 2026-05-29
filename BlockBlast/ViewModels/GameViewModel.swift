@@ -125,7 +125,7 @@ final class GameViewModel: ObservableObject {
         }
         
         // Remove placed block from hand
-        hand = BlockHand(blocks: hand.blocks.filter { $0.id != selectedBlock.id })
+        hand = BlockHand(blocks: hand.blocks.filter { $0.id != original.id })
         selectedBlock = nil
         rotationAngle = 0
         previewPosition = nil

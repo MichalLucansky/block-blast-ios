@@ -10,7 +10,7 @@ extension Container {
     @MainActor
     var gameViewModel: Factory<GameViewModel> {
         self { GameViewModel() }
-            .shared
+            .singleton // persistent game state — survives view lifecycle
     }
     
     @MainActor
