@@ -8,7 +8,7 @@ struct BlockHandComponent: View {
     
     var body: some View {
         HStack(spacing: 20) {
-            ForEach(hand.blocks) { block in
+            ForEach(hand.blocks) { (block: BlockShape) in
                 let isSel = selectedBlock?.id == block.id
                 let display = isSel ? block.rotated(by: rotationAngle) : block
                 BlockPreview(block: display, isSelected: isSel)

@@ -1,10 +1,30 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Domain Color
 
 /// Domain-safe color that doesn't depend on SwiftUI.
 enum BlockColor: String, Codable, Equatable, CaseIterable {
     case yellow, blue, green, orange, red, purple, pink, cyan, mint, teal, indigo, brown
+}
+
+extension BlockColor {
+    var swiftUIColor: SwiftUI.Color {
+        switch self {
+        case .yellow: return .yellow
+        case .blue: return .blue
+        case .green: return .green
+        case .orange: return .orange
+        case .red: return .red
+        case .purple: return .purple
+        case .pink: return .pink
+        case .cyan: return .cyan
+        case .mint: return .mint
+        case .teal: return .teal
+        case .indigo: return .indigo
+        case .brown: return .brown
+        }
+    }
 }
 
 // MARK: - Cell Coordinate

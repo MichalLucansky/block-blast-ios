@@ -51,7 +51,7 @@
 		6DB8F3EC8A06971EB3C20C09 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		781057309E4ECE552D58B97A /* GameStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStorageManager.swift; sourceTree = "<group>"; };
 		8AC58163B47D2E8314D67471 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
-		A76FFE9B8E7E51CEAF3B90D1 /* BlockBlast.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BlockBlast.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A76FFE9B8E7E51CEAF3B90D1 /* BlockBlast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlockBlast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBF80211E7A28108F204F567 /* GameModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModelsTests.swift; sourceTree = "<group>"; };
 		D3831DE9390FC807F645E35D /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		DE5F891826F8F13F2D31C668 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -229,7 +229,6 @@
 						ProvisioningStyle = Automatic;
 					};
 					E09BD946994A4E309BDC7ADF = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -266,8 +265,8 @@
 				7F874FA455D0DA37B92FDA7B /* BlockHandComponent.swift in Sources */,
 				94E5BCFA203A6DBD662CAC39 /* ContentView.swift in Sources */,
 				DD1D36EB8457D42E3DA4E218 /* DIContainer.swift in Sources */,
-				6C70DB33DFC9E7EE7644F5A7 /* GameModels.swift in Sources */,
-				A14D0F309CFF9F68F90C1716 /* GameOverOverlay.swift in Sources */,
+			6C70DB33DFC9E7EE7644F5A7 /* GameModels.swift in Sources */,
+			A14D0F309CFF9F68F90C1716 /* GameOverOverlay.swift in Sources */,
 				6CF066798812281BE0E6883B /* GameStorageManager.swift in Sources */,
 				C0728BB419DB637C8E21ABDA /* GameView.swift in Sources */,
 				9DBB82F4A4D911EBAEF25116 /* GameViewModel.swift in Sources */,
@@ -306,12 +305,15 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = A9YN63GW95;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BlockBlast/Info.plist;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lucansky.blockblast;
 				SDKROOT = iphoneos;
@@ -327,7 +329,10 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lucansky.blockblast.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -463,12 +468,15 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = A9YN63GW95;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BlockBlast/Info.plist;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lucansky.blockblast;
 				SDKROOT = iphoneos;
@@ -484,7 +492,10 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lucansky.blockblast.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
