@@ -77,9 +77,9 @@ final class GameViewModel: ObservableObject {
     }
     
     func placeBlock() {
-        guard let selectedBlock,
+        guard let original = selectedBlock,
               let pos = previewPosition else { return }
-        let block = selectedBlock.rotated(by: rotationAngle)
+        let block = original.rotated(by: rotationAngle)
         guard grid.canPlace(block, at: pos.row, col: pos.col) else { return }
         
         // Place the block — assign new grid so @Published fires
