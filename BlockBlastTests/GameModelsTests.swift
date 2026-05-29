@@ -242,4 +242,33 @@ final class GameModelsTests: XCTestCase {
         let rotated = shape.rotated90Clockwise()
         XCTAssertEqual(rotated.color, shape.color)
     }
+    
+    // MARK: - hasValidMoves with rotation
+    
+    func test_hasValidMoves_considersRotation() {
+        // Fill grid leaving only a 1x2 horizontal gap at row 0, cols 0-1
+        var grid = GameGrid()
+        for r in 0..<GameGrid.gridSize {
+            for c in 0..<GameGrid.gridSize {
+                if !(r == 0 && c < 2) {
+                    grid = grid.placingBlock(BlockShape.single, at: r, col: c)
+                }
+            }
+        }
+        // bar1x2V (vertical) doesn't fit unrotated, but fits rotated 90°
+        let hand = BlockHand(blocks: [BlockShape(id: UUID(), cells: BlockShape.bar1x2V.cells, color: .green)])
+        XCTAssertTrue(hand.hasValidMoves(on: grid), "Should find valid move when block fits rotated")
+    }
+    
+    func test_hasValidMoves_noRotationFits() {
+        // Full grid — nothing fits in any orientation
+        var grid = GameGrid()
+        for r in 0..<GameGrid.gridSize {
+            for c in 0..<GameGrid.gridSize {
+                grid = grid.placingBlock(BlockShape.single, at: r, col: c)
+            }
+        }
+        let hand = BlockHand.generate()
+        XCTAssertFalse(hand.hasValidMoves(on: grid))
+    }
 }

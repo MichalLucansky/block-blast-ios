@@ -34,14 +34,7 @@ final class GameViewModel: ObservableObject {
     
     /// The currently selected block with rotation applied.
     var activeBlock: BlockShape? {
-        guard let block = selectedBlock else { return nil }
-        switch rotationAngle {
-        case 0: return block
-        case 90: return block.rotated90Clockwise()
-        case 180: return block.rotated90Clockwise().rotated90Clockwise()
-        case 270: return block.rotated90Clockwise().rotated90Clockwise().rotated90Clockwise()
-        default: return block
-        }
+        selectedBlock?.rotated(by: rotationAngle)
     }
     
     var highScore: Int { storage.highScore }
@@ -84,10 +77,10 @@ final class GameViewModel: ObservableObject {
     }
     
     func placeBlock() {
-        guard let block = activeBlock,
-              let originalId = selectedBlock?.id,
-              let pos = previewPosition,
-              grid.canPlace(block, at: pos.row, col: pos.col) else { return }
+        guard let selectedBlock,
+              let pos = previewPosition else { return }
+        let block = selectedBlock.rotated(by: rotationAngle)
+        guard grid.canPlace(block, at: pos.row, col: pos.col) else { return }
         
         // Place the block — assign new grid so @Published fires
         grid = grid.placingBlock(block, at: pos.row, col: pos.col)
@@ -132,7 +125,7 @@ final class GameViewModel: ObservableObject {
         }
         
         // Remove placed block from hand
-        hand = BlockHand(blocks: hand.blocks.filter { $0.id != originalId })
+        hand = BlockHand(blocks: hand.blocks.filter { $0.id != selectedBlock.id })
         selectedBlock = nil
         rotationAngle = 0
         previewPosition = nil

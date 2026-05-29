@@ -59,18 +59,3 @@ struct BlockPreview: View {
         min(12.0, 60.0 / CGFloat(max(block.width, block.height)))
     }
 }
-
-// MARK: - Rotation helper
-
-extension BlockShape {
-    /// Apply the given rotation angle (0, 90, 180, 270) and return the rotated shape.
-    func rotated(by angle: Int) -> BlockShape {
-        switch angle {
-        case 0: return self
-        case 90: return rotated90Clockwise()
-        case 180: return rotated90Clockwise().rotated90Clockwise()
-        case 270: return rotated90Clockwise().rotated90Clockwise().rotated90Clockwise()
-        default: return self
-        }
-    }
-}

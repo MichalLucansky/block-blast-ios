@@ -42,6 +42,16 @@ struct BlockShape: Identifiable, Codable, Equatable {
         }
         return BlockShape(id: self.id, cells: rotatedCells, color: self.color)
     }
+    
+    /// Apply the given rotation angle (0, 90, 180, 270) and return the rotated shape.
+    func rotated(by angle: Int) -> BlockShape {
+        switch angle {
+        case 90:  return rotated90Clockwise()
+        case 180: return rotated90Clockwise().rotated90Clockwise()
+        case 270: return rotated90Clockwise().rotated90Clockwise().rotated90Clockwise()
+        default:  return self
+        }
+    }
 }
 
 // MARK: - Predefined Block Shapes
@@ -271,10 +281,21 @@ struct BlockHand: Identifiable, Codable, Equatable {
     }
     
     private func canPlaceAnywhere(_ block: BlockShape, on grid: GameGrid) -> Bool {
-        for r in 0..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize {
-                if grid.canPlace(block, at: r, col: c) {
-                    return true
+        // Check all distinct rotations (up to 4)
+        var orientations: [BlockShape] = []
+        var current = block
+        for _ in 0..<4 {
+            if !orientations.contains(current) {
+                orientations.append(current)
+            }
+            current = current.rotated90Clockwise()
+        }
+        for orientation in orientations {
+            for r in 0..<GameGrid.gridSize {
+                for c in 0..<GameGrid.gridSize {
+                    if grid.canPlace(orientation, at: r, col: c) {
+                        return true
+                    }
                 }
             }
         }
