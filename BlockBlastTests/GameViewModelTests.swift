@@ -141,7 +141,9 @@ final class GameViewModelTests: XCTestCase {
         }
         vm.grid = grid
         
-        let block = vm.hand.blocks.first!
+        // Use a deterministic single-cell block
+        let block = BlockShape.single
+        vm.hand = BlockHand(blocks: [block, BlockShape.bar1x2H, BlockShape.bar1x2V])
         vm.selectBlock(block)
         let pos = findValidPosition(for: block, on: vm.grid)!
         vm.tapGridCell(row: pos.row, col: pos.col)

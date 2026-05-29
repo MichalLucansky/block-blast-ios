@@ -45,6 +45,10 @@ final class GameModelsTests: XCTestCase {
         }
     }
     
+    func test_z3x2_hasFourCells() {
+        XCTAssertEqual(BlockShape.z3x2.cellCount, 4)
+    }
+    
     func test_blockShape_codable() throws {
         let shape = BlockShape.l3x2
         let data = try JSONEncoder().encode(shape)
