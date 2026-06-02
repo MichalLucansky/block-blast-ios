@@ -65,6 +65,7 @@ struct GameView: View {
                 Spacer(minLength: 8)
 
                 // Game grid — a responsive square sized off the available space.
+                // Drag a selected block over it to preview, release to place.
                 GridComponent(
                     grid: viewModel.grid,
                     selectedBlock: viewModel.selectedBlock,
@@ -72,8 +73,11 @@ struct GameView: View {
                     canPlaceAtPreview: viewModel.canPlaceAtPreview,
                     linesCleared: viewModel.linesClearedThisRound,
                     showAnimation: viewModel.showLineClearAnimation,
-                    onTap: { row, col in
-                        viewModel.tapGridCell(row: row, col: col)
+                    onPreview: { row, col in
+                        viewModel.previewAt(row: row, col: col)
+                    },
+                    onCommit: {
+                        viewModel.commitPlacement()
                     }
                 )
                 .frame(width: gridSide, height: gridSide)

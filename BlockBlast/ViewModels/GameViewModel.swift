@@ -98,12 +98,25 @@ final class GameViewModel: ObservableObject {
     }
     
     func previewAt(row: Int, col: Int) {
-        guard let block = selectedBlock else { return }
+        guard status == .playing, let block = selectedBlock else { return }
         if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
             previewPosition = anchor
             canPlaceAtPreview = true
         } else {
             previewPosition = (row, col)
+            canPlaceAtPreview = false
+        }
+    }
+
+    /// Commits the block at the current preview position (the end of a drag/tap).
+    /// Places it if the preview is valid; otherwise clears the ghost but keeps the
+    /// block selected so the player can try another spot.
+    func commitPlacement() {
+        guard status == .playing else { return }
+        if canPlaceAtPreview {
+            placeBlock()
+        } else {
+            previewPosition = nil
             canPlaceAtPreview = false
         }
     }

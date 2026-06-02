@@ -73,6 +73,42 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.selectedBlock)
     }
 
+    // MARK: - preview + commit (drag to place)
+
+    func test_previewThenCommit_placesBlock() {
+        let block = viewModel.hand.blocks.first!
+        viewModel.selectBlock(block)
+        let pos = findValidPosition(for: block, on: viewModel.grid)!
+
+        viewModel.previewAt(row: pos.row, col: pos.col)
+        XCTAssertTrue(viewModel.canPlaceAtPreview)
+        XCTAssertNotNil(viewModel.previewPosition)
+
+        viewModel.commitPlacement()
+        XCTAssertEqual(viewModel.blocksPlaced, 1)
+        XCTAssertNil(viewModel.selectedBlock)
+    }
+
+    func test_commitPlacement_invalidPreview_keepsSelectionAndPlacesNothing() {
+        // Fill the board so nothing fits.
+        var grid = GameGrid()
+        for r in 0..<GameGrid.gridSize {
+            for c in 0..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: r, col: c)
+            }
+        }
+        viewModel.grid = grid
+
+        let block = BlockShape.single
+        viewModel.selectBlock(block)
+        viewModel.previewAt(row: 0, col: 0)
+        XCTAssertFalse(viewModel.canPlaceAtPreview)
+
+        viewModel.commitPlacement()
+        XCTAssertEqual(viewModel.blocksPlaced, 0)
+        XCTAssertEqual(viewModel.selectedBlock?.id, block.id, "Selection kept after an invalid drop")
+    }
+
     // MARK: - rotateSelectedBlock
 
     func test_rotateSelectedBlock_rotatesSelectionAndHandSlot() {
