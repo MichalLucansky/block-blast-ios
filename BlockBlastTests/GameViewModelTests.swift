@@ -146,16 +146,20 @@ final class GameViewModelTests: XCTestCase {
     }
     
     func test_tapGridCell_invalidPosition_doesNothing() {
+        // Fully occupy the board so no tap can place anything.
+        var grid = GameGrid()
+        for r in 0..<GameGrid.gridSize {
+            for c in 0..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: r, col: c)
+            }
+        }
+        viewModel.grid = grid
+
         let block = viewModel.hand.blocks.first!
         viewModel.selectBlock(block)
-        
-        // Try to place at occupied position
-        viewModel.tapGridCell(row: 0, col: 0)
-        
-        // Should place if valid
-        if viewModel.grid.canPlace(block, at: 0, col: 0) {
-            XCTAssertEqual(viewModel.blocksPlaced, 1)
-        }
+        viewModel.tapGridCell(row: 3, col: 3)
+
+        XCTAssertEqual(viewModel.blocksPlaced, 0, "Nothing places on a full board")
     }
 
     func test_tapGridCell_anchorsBlockTopLeftAtTap() {
@@ -318,16 +322,34 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.score, 50)
     }
 
-    func test_revive_resumesPlayAndPreservesScore() {
+    func test_revive_clearsBottomRowsKeepsTopAndScore() {
+        // Fill the top row and the bottom rows so we can verify what's cleared.
+        var grid = GameGrid()
+        for c in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: 0, col: c)
+            for r in (GameGrid.gridSize - GameViewModel.reviveRowsCleared)..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: r, col: c)
+            }
+        }
+        viewModel.grid = grid
         viewModel.score = 120
         viewModel.endGame()
+
         viewModel.revive()
 
         XCTAssertEqual(viewModel.status, .playing)
         XCTAssertFalse(viewModel.showGameOver)
         XCTAssertEqual(viewModel.score, 120, "Revive keeps the player's score")
-        XCTAssertTrue(viewModel.grid.isEmpty(), "Revive clears the board")
-        XCTAssertEqual(viewModel.hand.blocks.count, 3, "Revive deals a fresh hand")
+
+        // The bottom rows are cleared for breathing room...
+        for r in (GameGrid.gridSize - GameViewModel.reviveRowsCleared)..<GameGrid.gridSize {
+            for c in 0..<GameGrid.gridSize {
+                XCTAssertNil(viewModel.grid.cells[r][c], "Bottom rows are cleared")
+            }
+        }
+        // ...while the structure above is kept.
+        XCTAssertNotNil(viewModel.grid.cells[0][0], "Board above the bottom rows is preserved")
+        XCTAssertEqual(viewModel.hand.blocks.count, 3, "Player still has a full hand")
     }
 
     func test_revive_isCappedAtMaxRevives() {

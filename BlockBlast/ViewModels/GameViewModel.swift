@@ -22,6 +22,9 @@ final class GameViewModel: ObservableObject {
 
     /// Max number of rewarded "bonus life" revives allowed per game.
     static let maxRevives = 1
+
+    /// How many rows the revive clears from the bottom of the board.
+    static let reviveRowsCleared = 3
     
     // MARK: - Dependencies
     @Injected(\.gameStorageManager) private var storage: GameStorageManager
@@ -59,14 +62,18 @@ final class GameViewModel: ObservableObject {
         revivesUsed = 0
     }
 
-    /// Grants a "bonus life" after watching a rewarded ad: clears the board and
-    /// deals a fresh hand so the player can keep their score and continue.
-    /// No-op if the player is not currently eligible (see `canRevive`).
+    /// Grants a "bonus life" after watching a rewarded ad: clears the bottom rows
+    /// of the board for breathing room while keeping the structure the player
+    /// built above and their score. Deals a fresh hand only if the current blocks
+    /// still have nowhere to go, so the continue is always playable. No-op if the
+    /// player is not currently eligible (see `canRevive`).
     func revive() {
         guard canRevive else { return }
         revivesUsed += 1
-        grid = GameGrid()
-        hand = BlockHand.generate()
+
+        let bottomRows = Array((GameGrid.gridSize - Self.reviveRowsCleared)..<GameGrid.gridSize)
+        grid.clearLines((rows: bottomRows, cols: []))
+
         status = .playing
         combo = 0
         selectedBlock = nil
@@ -75,6 +82,11 @@ final class GameViewModel: ObservableObject {
         showGameOver = false
         linesClearedThisRound = []
         showLineClearAnimation = false
+
+        // Guarantee the player can actually keep playing after the clear.
+        if !hand.hasValidMoves(on: grid) {
+            hand = BlockHand.generate()
+        }
     }
     
     func selectBlock(_ block: BlockShape?) {
