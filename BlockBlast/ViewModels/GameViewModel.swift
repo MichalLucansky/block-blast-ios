@@ -82,6 +82,20 @@ final class GameViewModel: ObservableObject {
         previewPosition = nil
         canPlaceAtPreview = false
     }
+
+    /// Rotates the currently selected block 90° clockwise. The matching hand
+    /// slot is updated too (same id) so the hand preview reflects the rotation,
+    /// and any active placement preview is re-evaluated. No-op if nothing is
+    /// selected.
+    func rotateSelectedBlock() {
+        guard status == .playing, let block = selectedBlock else { return }
+        let rotated = block.rotated()
+        selectedBlock = rotated
+        hand = BlockHand(blocks: hand.blocks.map { $0.id == rotated.id ? rotated : $0 })
+        if let pos = previewPosition {
+            canPlaceAtPreview = grid.canPlace(rotated, at: pos.row, col: pos.col)
+        }
+    }
     
     func previewAt(row: Int, col: Int) {
         guard let block = selectedBlock else { return }

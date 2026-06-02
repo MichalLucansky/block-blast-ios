@@ -80,6 +80,23 @@ struct GameView: View {
 
                 Spacer(minLength: 8)
 
+                // Rotate control — turn the selected block 90° before placing.
+                if viewModel.hasSelectedBlock {
+                    Button {
+                        viewModel.rotateSelectedBlock()
+                    } label: {
+                        Label("Rotate", systemImage: "rotate.right")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(Color.blue, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 4)
+                    .transition(.scale.combined(with: .opacity))
+                }
+
                 // Block hand
                 BlockHandComponent(
                     hand: viewModel.hand,
@@ -103,6 +120,7 @@ struct GameView: View {
                     .padding(.bottom, 16)
             }
             .frame(width: geo.size.width, height: geo.size.height)
+            .animation(.spring(response: 0.3), value: viewModel.hasSelectedBlock)
         }
         .overlay {
             if viewModel.showGameOver {

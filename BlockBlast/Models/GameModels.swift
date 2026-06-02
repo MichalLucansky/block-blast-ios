@@ -18,6 +18,19 @@ struct BlockShape: Identifiable {
     var width: Int { cells.map(\.col).max()! + 1 }
     var height: Int { cells.map(\.row).max()! + 1 }
     var cellCount: Int { cells.count }
+
+    /// Returns the same block rotated 90° clockwise, re-normalized so its cells
+    /// are still anchored at a (0, 0) top-left origin. Keeps the same `id` and
+    /// `color` so it remains the same hand slot after rotation.
+    func rotated() -> BlockShape {
+        let maxRow = cells.map(\.row).max() ?? 0
+        // 90° clockwise: (row, col) -> (col, maxRow - row).
+        let rotated = cells.map { (row: $0.col, col: maxRow - $0.row) }
+        let minRow = rotated.map(\.row).min() ?? 0
+        let minCol = rotated.map(\.col).min() ?? 0
+        let normalized = rotated.map { (row: $0.row - minRow, col: $0.col - minCol) }
+        return BlockShape(id: id, cells: normalized, color: color)
+    }
 }
 
 // MARK: - Predefined Block Shapes

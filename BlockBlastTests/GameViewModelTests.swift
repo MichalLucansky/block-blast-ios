@@ -72,6 +72,27 @@ final class GameViewModelTests: XCTestCase {
         viewModel.selectBlock(nil)
         XCTAssertNil(viewModel.selectedBlock)
     }
+
+    // MARK: - rotateSelectedBlock
+
+    func test_rotateSelectedBlock_rotatesSelectionAndHandSlot() {
+        let block = BlockShape.bar1x3H // 3 wide, 1 tall
+        viewModel.hand = BlockHand(blocks: [block])
+        viewModel.selectBlock(block)
+
+        viewModel.rotateSelectedBlock()
+
+        XCTAssertEqual(viewModel.selectedBlock?.width, 1, "Selected block became vertical")
+        XCTAssertEqual(viewModel.selectedBlock?.height, 3)
+        let handSlot = viewModel.hand.blocks.first { $0.id == block.id }
+        XCTAssertEqual(handSlot?.height, 3, "Hand slot reflects the rotation")
+    }
+
+    func test_rotateSelectedBlock_noOpWithoutSelection() {
+        XCTAssertNil(viewModel.selectedBlock)
+        viewModel.rotateSelectedBlock()
+        XCTAssertNil(viewModel.selectedBlock)
+    }
     
     // MARK: - tapGridCell
     

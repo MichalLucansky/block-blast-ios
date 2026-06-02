@@ -44,7 +44,40 @@ final class GameModelsTests: XCTestCase {
             XCTAssertLessThanOrEqual(shape.height, 5, "Shape height should be <= 5")
         }
     }
-    
+
+    // MARK: - Rotation
+
+    func test_rotated_swapsWidthAndHeight() {
+        let rotated = BlockShape.bar1x3H.rotated() // 3 wide, 1 tall -> 1 wide, 3 tall
+        XCTAssertEqual(rotated.width, 1)
+        XCTAssertEqual(rotated.height, 3)
+    }
+
+    func test_rotated_preservesIdColorAndCellCount() {
+        let original = BlockShape.l3x2
+        let rotated = original.rotated()
+        XCTAssertEqual(rotated.id, original.id, "Rotation keeps the same hand slot id")
+        XCTAssertEqual(rotated.color, original.color)
+        XCTAssertEqual(rotated.cellCount, original.cellCount)
+    }
+
+    func test_rotated_isNormalizedToTopLeftOrigin() {
+        let rotated = BlockShape.l3x2.rotated()
+        XCTAssertEqual(rotated.cells.map(\.row).min(), 0, "Rotated cells start at row 0")
+        XCTAssertEqual(rotated.cells.map(\.col).min(), 0, "Rotated cells start at col 0")
+    }
+
+    func test_rotated_fourTimesReturnsToOriginal() {
+        for shape in BlockShape.allShapes {
+            let fourTimes = shape.rotated().rotated().rotated().rotated()
+            XCTAssertEqual(
+                fourTimes.cells.map { [$0.row, $0.col] },
+                shape.cells.map { [$0.row, $0.col] },
+                "Four 90° rotations should return to the original cells"
+            )
+        }
+    }
+
     // MARK: - GameGrid
     
     func test_grid_init_empty() {
