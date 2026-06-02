@@ -85,8 +85,40 @@ final class GameViewModel: ObservableObject {
     
     func previewAt(row: Int, col: Int) {
         guard let block = selectedBlock else { return }
-        previewPosition = (row, col)
-        canPlaceAtPreview = grid.canPlace(block, at: row, col: col)
+        if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
+            previewPosition = anchor
+            canPlaceAtPreview = true
+        } else {
+            previewPosition = (row, col)
+            canPlaceAtPreview = false
+        }
+    }
+
+    /// Finds the most natural valid anchor (top-left origin) for `block` when the
+    /// player taps `(tapRow, tapCol)`. Rather than requiring the tap to be the
+    /// block's top-left corner, we try to drop the block *centred on* the tapped
+    /// cell: for each of the block's cells we compute the anchor that would put
+    /// that cell under the tap, then pick the valid placement whose cell sits
+    /// closest to the block's centre. Returns `nil` if the block cannot be
+    /// placed over the tapped cell at all.
+    func bestAnchor(for block: BlockShape, tapRow: Int, tapCol: Int) -> (row: Int, col: Int)? {
+        let rows = block.cells.map(\.row)
+        let cols = block.cells.map(\.col)
+        let centerRow = Double((rows.min() ?? 0) + (rows.max() ?? 0)) / 2
+        let centerCol = Double((cols.min() ?? 0) + (cols.max() ?? 0)) / 2
+
+        func distanceFromCentre(_ cell: (row: Int, col: Int)) -> Double {
+            let dr = Double(cell.row) - centerRow
+            let dc = Double(cell.col) - centerCol
+            return dr * dr + dc * dc
+        }
+
+        // Candidate anchors that put one of the block's cells under the tap,
+        // ordered so the cell nearest the block's centre is tried first.
+        return block.cells
+            .sorted { distanceFromCentre($0) < distanceFromCentre($1) }
+            .map { (row: tapRow - $0.row, col: tapCol - $0.col) }
+            .first { grid.canPlace(block, at: $0.row, col: $0.col) }
     }
     
     func placeBlock() {
@@ -164,20 +196,20 @@ final class GameViewModel: ObservableObject {
         guard status == .playing else { return }
         
         if let block = selectedBlock {
-            // If we have a selected block, try to place it
-            if grid.canPlace(block, at: row, col: col) {
-                previewPosition = (row, col)
+            // If we have a selected block, drop it centred on the tapped cell.
+            if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
+                previewPosition = anchor
                 canPlaceAtPreview = true
                 placeBlock()
             } else {
                 cancelPlacement()
             }
         } else {
-            // Try to find a block from hand that fits here
+            // Try to find a hand block that can be dropped over the tapped cell.
             for block in hand.blocks {
-                if grid.canPlace(block, at: row, col: col) {
+                if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
                     selectedBlock = block
-                    previewPosition = (row, col)
+                    previewPosition = anchor
                     canPlaceAtPreview = true
                     placeBlock()
                     return
