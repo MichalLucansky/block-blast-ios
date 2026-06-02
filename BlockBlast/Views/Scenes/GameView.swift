@@ -96,9 +96,11 @@ struct GameView: View {
 
                 Spacer(minLength: 8)
 
-                // AdMob banner pinned to the bottom (fixed 320x50 ad format).
+                // AdMob banner near the bottom (fixed 320x50 ad format), with
+                // breathing room above the floating tab bar.
                 BannerAdView()
                     .frame(width: 320, height: 50)
+                    .padding(.bottom, 16)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
