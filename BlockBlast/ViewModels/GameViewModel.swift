@@ -108,31 +108,16 @@ final class GameViewModel: ObservableObject {
         }
     }
 
-    /// Finds the most natural valid anchor (top-left origin) for `block` when the
-    /// player taps `(tapRow, tapCol)`. Rather than requiring the tap to be the
-    /// block's top-left corner, we try to drop the block *centred on* the tapped
-    /// cell: for each of the block's cells we compute the anchor that would put
-    /// that cell under the tap, then pick the valid placement whose cell sits
-    /// closest to the block's centre. Returns `nil` if the block cannot be
-    /// placed over the tapped cell at all.
+    /// Resolves where to drop `block` when the player taps `(tapRow, tapCol)`.
+    /// The block is anchored with its top-left origin at the tapped cell — exactly
+    /// how it looks in the hand — and then nudged inside the board edges so it can
+    /// never run off. Placement is therefore predictable and WYSIWYG: the tapped
+    /// cell is the block's top-left corner. Returns `nil` if the (edge-clamped)
+    /// spot is already blocked.
     func bestAnchor(for block: BlockShape, tapRow: Int, tapCol: Int) -> (row: Int, col: Int)? {
-        let rows = block.cells.map(\.row)
-        let cols = block.cells.map(\.col)
-        let centerRow = Double((rows.min() ?? 0) + (rows.max() ?? 0)) / 2
-        let centerCol = Double((cols.min() ?? 0) + (cols.max() ?? 0)) / 2
-
-        func distanceFromCentre(_ cell: (row: Int, col: Int)) -> Double {
-            let dr = Double(cell.row) - centerRow
-            let dc = Double(cell.col) - centerCol
-            return dr * dr + dc * dc
-        }
-
-        // Candidate anchors that put one of the block's cells under the tap,
-        // ordered so the cell nearest the block's centre is tried first.
-        return block.cells
-            .sorted { distanceFromCentre($0) < distanceFromCentre($1) }
-            .map { (row: tapRow - $0.row, col: tapCol - $0.col) }
-            .first { grid.canPlace(block, at: $0.row, col: $0.col) }
+        let row = min(max(tapRow, 0), GameGrid.gridSize - block.height)
+        let col = min(max(tapCol, 0), GameGrid.gridSize - block.width)
+        return grid.canPlace(block, at: row, col: col) ? (row, col) : nil
     }
     
     func placeBlock() {

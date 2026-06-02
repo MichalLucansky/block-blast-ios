@@ -122,23 +122,23 @@ final class GameViewModelTests: XCTestCase {
         }
     }
 
-    func test_tapGridCell_centresBlockOnTappedCell() {
-        // A 3-wide horizontal bar; its centre is the middle cell.
+    func test_tapGridCell_anchorsBlockTopLeftAtTap() {
+        // A 3-wide horizontal bar should extend right/down from the tapped cell,
+        // exactly as it looks in the hand — the tap is its top-left corner.
         let block = BlockShape.bar1x3H
         viewModel.selectBlock(block)
 
         viewModel.tapGridCell(row: 4, col: 4)
 
-        // The bar should straddle the tapped cell (cols 3,4,5), not start at it.
-        XCTAssertNotNil(viewModel.grid.cells[4][3])
         XCTAssertNotNil(viewModel.grid.cells[4][4])
         XCTAssertNotNil(viewModel.grid.cells[4][5])
-        XCTAssertNil(viewModel.grid.cells[4][6], "Block is centred, not anchored at the tap")
+        XCTAssertNotNil(viewModel.grid.cells[4][6])
+        XCTAssertNil(viewModel.grid.cells[4][3], "Block is anchored at the tap, not centred on it")
     }
 
-    func test_tapGridCell_placesBlockTappedNearEdge() {
-        // Tapping the last column is impossible under top-left-anchor rules (the
-        // bar would run off the board) but should now snap inside the edge.
+    func test_tapGridCell_snapsInsideRightEdge() {
+        // Tapping the last column would run the bar off the board; it should snap
+        // inside the edge and still place (covering the tapped cell).
         let block = BlockShape.bar1x3H
         viewModel.selectBlock(block)
 
@@ -146,6 +146,7 @@ final class GameViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.blocksPlaced, 1)
         XCTAssertNotNil(viewModel.grid.cells[0][7], "The tapped cell is covered by the block")
+        XCTAssertNotNil(viewModel.grid.cells[0][5], "Bar snapped to cols 5,6,7")
     }
 
     // MARK: - Combo and scoring
@@ -292,15 +293,13 @@ final class GameViewModelTests: XCTestCase {
 
     // MARK: - Helper
     
-    /// Returns a grid cell that, when tapped, lets `block` be placed — i.e. a
-    /// cell the block actually covers at some valid anchor. Placement now drops
-    /// the block *centred on the tapped cell*, so the tap target must be a cell
-    /// the block occupies, not merely its (possibly empty) top-left corner.
+    /// Returns the first valid top-left anchor for `block`. Placement anchors the
+    /// block's top-left origin at the tapped cell, so tapping this position drops
+    /// the block exactly there.
     private func findValidPosition(for block: BlockShape, on grid: GameGrid) -> (row: Int, col: Int)? {
         for r in 0..<GameGrid.gridSize {
             for c in 0..<GameGrid.gridSize where grid.canPlace(block, at: r, col: c) {
-                let covered = block.cells[0]
-                return (r + covered.row, c + covered.col)
+                return (r, c)
             }
         }
         return nil
