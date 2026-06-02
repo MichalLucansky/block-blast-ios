@@ -109,15 +109,16 @@ final class GameViewModel: ObservableObject {
     }
 
     /// Resolves where to drop `block` when the player taps `(tapRow, tapCol)`.
-    /// The block is anchored with its top-left origin at the tapped cell — exactly
-    /// how it looks in the hand — and then nudged inside the board edges so it can
-    /// never run off. Placement is therefore predictable and WYSIWYG: the tapped
-    /// cell is the block's top-left corner. Returns `nil` if the (edge-clamped)
-    /// spot is already blocked.
+    /// Preference is to anchor the block's top-left at the tapped cell — exactly
+    /// how it looks in the hand (WYSIWYG). If that exact spot is blocked or runs
+    /// off the board, the block is nudged just enough to fit while still covering
+    /// the tapped cell: each of its cells (in top-left-first reading order, which
+    /// is how `cells` is stored) is tried under the tap and the first placement
+    /// that fits wins. Returns `nil` if nothing covering the tap fits.
     func bestAnchor(for block: BlockShape, tapRow: Int, tapCol: Int) -> (row: Int, col: Int)? {
-        let row = min(max(tapRow, 0), GameGrid.gridSize - block.height)
-        let col = min(max(tapCol, 0), GameGrid.gridSize - block.width)
-        return grid.canPlace(block, at: row, col: col) ? (row, col) : nil
+        block.cells
+            .map { (row: tapRow - $0.row, col: tapCol - $0.col) }
+            .first { grid.canPlace(block, at: $0.row, col: $0.col) }
     }
     
     func placeBlock() {

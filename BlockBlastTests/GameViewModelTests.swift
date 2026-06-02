@@ -149,6 +149,24 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertNotNil(viewModel.grid.cells[0][5], "Bar snapped to cols 5,6,7")
     }
 
+    func test_tapGridCell_shiftsToFitAroundOccupiedCells() {
+        // Occupy a cell on the bottom row, then a 5-wide bar tapped just left of
+        // it should shift left to fit (cols 0..4) while still covering the tap.
+        var grid = GameGrid()
+        grid.placeBlock(BlockShape.single, at: 7, col: 5)
+        viewModel.grid = grid
+
+        let bar = BlockShape.bar1x5H // top-left at col 1 would hit the occupied col 5
+        viewModel.selectBlock(bar)
+        viewModel.tapGridCell(row: 7, col: 1)
+
+        XCTAssertEqual(viewModel.blocksPlaced, 1)
+        for c in 0...4 {
+            XCTAssertNotNil(viewModel.grid.cells[7][c], "Bar shifted to cols 0..4")
+        }
+        XCTAssertNotNil(viewModel.grid.cells[7][1], "Tapped cell is covered")
+    }
+
     // MARK: - Combo and scoring
     
     func test_placeBlock_incrementsBlocksPlaced() {
@@ -293,13 +311,16 @@ final class GameViewModelTests: XCTestCase {
 
     // MARK: - Helper
     
-    /// Returns the first valid top-left anchor for `block`. Placement anchors the
-    /// block's top-left origin at the tapped cell, so tapping this position drops
-    /// the block exactly there.
+    /// Returns a grid cell that, when tapped, lets `block` be placed — a cell the
+    /// block actually covers at some valid anchor. Placement anchors the block's
+    /// top-left at the tap (shifting to fit if needed), so the tap target must be
+    /// a cell the block occupies, not merely its (possibly empty) bounding-box
+    /// corner.
     private func findValidPosition(for block: BlockShape, on grid: GameGrid) -> (row: Int, col: Int)? {
         for r in 0..<GameGrid.gridSize {
             for c in 0..<GameGrid.gridSize where grid.canPlace(block, at: r, col: c) {
-                return (r, c)
+                let covered = block.cells[0]
+                return (r + covered.row, c + covered.col)
             }
         }
         return nil
