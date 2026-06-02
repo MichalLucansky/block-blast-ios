@@ -1,4 +1,5 @@
 import SwiftUI
+import FactoryKit
 
 struct StatsView: View {
     @StateObject private var viewModel = Container.shared.statsViewModel()

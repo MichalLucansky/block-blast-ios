@@ -21,7 +21,6 @@ struct GridComponent: View {
                             isCleared: linesCleared.contains(row),
                             showAnimation: showAnimation
                         )
-                        .aspectRatio(1, contentMode: .fit)
                         .onTapGesture {
                             onTap(row, col)
                         }

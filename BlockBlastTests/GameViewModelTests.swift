@@ -7,9 +7,12 @@ final class GameViewModelTests: XCTestCase {
     
     private var userDefaults: UserDefaults!
     private var storage: GameStorageManager!
-    
-    private var viewModel: GameViewModel { Container.shared.gameViewModel() }
-    
+
+    // `gameViewModel` is a non-singleton factory (a new instance per resolve),
+    // so resolve it once here and hold it — otherwise each `viewModel` access
+    // would mutate a throwaway instance.
+    private var viewModel: GameViewModel!
+
     override func setUp() {
         super.setUp()
         Container.shared.reset()
@@ -17,9 +20,11 @@ final class GameViewModelTests: XCTestCase {
         storage = GameStorageManager(userDefaults: userDefaults)
         Container.shared.gameStorageManager.register { self.storage }
         Container.shared.gameViewModel.register { GameViewModel() }
+        viewModel = Container.shared.gameViewModel()
     }
-    
+
     override func tearDown() {
+        viewModel = nil
         storage = nil
         userDefaults = nil
         Container.shared.reset()
@@ -192,6 +197,52 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.hasSelectedBlock)
     }
     
+    // MARK: - Revive (rewarded "bonus life")
+
+    func test_canRevive_falseWhilePlaying() {
+        XCTAssertEqual(viewModel.status, .playing)
+        XCTAssertFalse(viewModel.canRevive)
+    }
+
+    func test_canRevive_trueAtGameOver() {
+        viewModel.endGame()
+        XCTAssertTrue(viewModel.canRevive)
+    }
+
+    func test_revive_whilePlaying_isNoOp() {
+        viewModel.score = 50
+        viewModel.revive()
+        XCTAssertEqual(viewModel.status, .playing)
+        XCTAssertEqual(viewModel.score, 50)
+    }
+
+    func test_revive_resumesPlayAndPreservesScore() {
+        viewModel.score = 120
+        viewModel.endGame()
+        viewModel.revive()
+
+        XCTAssertEqual(viewModel.status, .playing)
+        XCTAssertFalse(viewModel.showGameOver)
+        XCTAssertEqual(viewModel.score, 120, "Revive keeps the player's score")
+        XCTAssertTrue(viewModel.grid.isEmpty(), "Revive clears the board")
+        XCTAssertEqual(viewModel.hand.blocks.count, 3, "Revive deals a fresh hand")
+    }
+
+    func test_revive_isCappedAtMaxRevives() {
+        for _ in 0..<GameViewModel.maxRevives {
+            viewModel.endGame()
+            XCTAssertTrue(viewModel.canRevive)
+            viewModel.revive()
+        }
+
+        // After exhausting the allowance, a further game over cannot be revived.
+        viewModel.endGame()
+        XCTAssertFalse(viewModel.canRevive)
+
+        viewModel.revive()
+        XCTAssertEqual(viewModel.status, .gameOver, "Revive is a no-op once capped")
+    }
+
     // MARK: - Helper
     
     private func findValidPosition(for block: BlockShape, on grid: GameGrid) -> (row: Int, col: Int)? {

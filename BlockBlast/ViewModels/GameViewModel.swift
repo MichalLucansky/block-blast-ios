@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FactoryKit
 
 @MainActor
 final class GameViewModel: ObservableObject {
@@ -17,6 +18,10 @@ final class GameViewModel: ObservableObject {
     @Published var newHighScore = false
     @Published var linesClearedThisRound: Set<Int> = []
     @Published var showLineClearAnimation = false
+    @Published private(set) var revivesUsed = 0
+
+    /// Max number of rewarded "bonus life" revives allowed per game.
+    static let maxRevives = 1
     
     // MARK: - Dependencies
     @Injected(\.gameStorageManager) private var storage: GameStorageManager
@@ -32,6 +37,9 @@ final class GameViewModel: ObservableObject {
     var highScore: Int { storage.highScore }
     var isGameOver: Bool { status == .gameOver }
     var hasSelectedBlock: Bool { selectedBlock != nil }
+
+    /// Whether the player is eligible to spend a rewarded "bonus life" right now.
+    var canRevive: Bool { status == .gameOver && revivesUsed < Self.maxRevives }
     
     // MARK: - Actions
     
@@ -48,6 +56,25 @@ final class GameViewModel: ObservableObject {
         newHighScore = false
         linesClearedThisRound = []
         showLineClearAnimation = false
+        revivesUsed = 0
+    }
+
+    /// Grants a "bonus life" after watching a rewarded ad: clears the board and
+    /// deals a fresh hand so the player can keep their score and continue.
+    /// No-op if the player is not currently eligible (see `canRevive`).
+    func revive() {
+        guard canRevive else { return }
+        revivesUsed += 1
+        grid = GameGrid()
+        hand = BlockHand.generate()
+        status = .playing
+        combo = 0
+        selectedBlock = nil
+        previewPosition = nil
+        canPlaceAtPreview = false
+        showGameOver = false
+        linesClearedThisRound = []
+        showLineClearAnimation = false
     }
     
     func selectBlock(_ block: BlockShape?) {
@@ -59,7 +86,7 @@ final class GameViewModel: ObservableObject {
     func previewAt(row: Int, col: Int) {
         guard let block = selectedBlock else { return }
         previewPosition = (row, col)
-        canPlaceAtPreview = grid.canPlace(block, at: row, col)
+        canPlaceAtPreview = grid.canPlace(block, at: row, col: col)
     }
     
     func placeBlock() {
@@ -138,7 +165,7 @@ final class GameViewModel: ObservableObject {
         
         if let block = selectedBlock {
             // If we have a selected block, try to place it
-            if grid.canPlace(block, at: row, col) {
+            if grid.canPlace(block, at: row, col: col) {
                 previewPosition = (row, col)
                 canPlaceAtPreview = true
                 placeBlock()
@@ -148,7 +175,7 @@ final class GameViewModel: ObservableObject {
         } else {
             // Try to find a block from hand that fits here
             for block in hand.blocks {
-                if grid.canPlace(block, at: row, col) {
+                if grid.canPlace(block, at: row, col: col) {
                     selectedBlock = block
                     previewPosition = (row, col)
                     canPlaceAtPreview = true

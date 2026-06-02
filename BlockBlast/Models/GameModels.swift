@@ -4,7 +4,7 @@ import SwiftUI
 // MARK: - Block Shape Definitions
 
 /// A block shape is defined by its cells relative to a top-left anchor.
-struct BlockShape: Identifiable, Codable, Equatable {
+struct BlockShape: Identifiable {
     let id: UUID
     let cells: [(row: Int, col: Int)]
     let color: Color
@@ -113,16 +113,16 @@ extension BlockShape {
 // MARK: - Grid
 
 /// The game grid - 8x8 board.
-struct GameGrid: Codable, Equatable {
+struct GameGrid: Equatable {
     static let gridSize = 8
     
     /// nil = empty, Color = filled
     var cells: [[Color?]]
     
     init() {
-        self.cells = Array(repeating: Array(repeating: Color?.none, count: gridSize), count: gridSize)
+        self.cells = Array(repeating: Array(repeating: Color?.none, count: Self.gridSize), count: Self.gridSize)
     }
-    
+
     mutating func placeBlock(_ shape: BlockShape, at row: Int, col: Int) {
         for cell in shape.cells {
             cells[row + cell.row][col + cell.col] = shape.color
@@ -133,7 +133,7 @@ struct GameGrid: Codable, Equatable {
         for cell in shape.cells {
             let r = row + cell.row
             let c = col + cell.col
-            guard r >= 0 && r < gridSize && c >= 0 && c < gridSize else { return false }
+            guard r >= 0 && r < Self.gridSize && c >= 0 && c < Self.gridSize else { return false }
             guard cells[r][c] == nil else { return false }
         }
         return true
@@ -144,15 +144,15 @@ struct GameGrid: Codable, Equatable {
         var rows: [Int] = []
         var cols: [Int] = []
         
-        for r in 0..<gridSize {
-            if cells[r].all({ $0 != nil }) {
+        for r in 0..<Self.gridSize {
+            if cells[r].allSatisfy({ $0 != nil }) {
                 rows.append(r)
             }
         }
-        
-        for c in 0..<gridSize {
+
+        for c in 0..<Self.gridSize {
             var complete = true
-            for r in 0..<gridSize {
+            for r in 0..<Self.gridSize {
                 if cells[r][c] == nil {
                     complete = false
                     break
@@ -166,21 +166,21 @@ struct GameGrid: Codable, Equatable {
     
     mutating func clearLines(_ lines: (rows: [Int], cols: [Int])) {
         for r in lines.rows {
-            cells[r] = Array(repeating: nil, count: gridSize)
+            cells[r] = Array(repeating: nil, count: Self.gridSize)
         }
         for c in lines.cols {
-            for r in 0..<gridSize {
+            for r in 0..<Self.gridSize {
                 cells[r][c] = nil
             }
         }
     }
     
     func isEmpty() -> Bool {
-        cells.all { row in row.all { $0 == nil } }
+        cells.allSatisfy { row in row.allSatisfy { $0 == nil } }
     }
     
-    func clear() {
-        cells = Array(repeating: Array(repeating: Color?.none, count: gridSize), count: gridSize)
+    mutating func clear() {
+        cells = Array(repeating: Array(repeating: Color?.none, count: Self.gridSize), count: Self.gridSize)
     }
 }
 
@@ -191,7 +191,7 @@ enum GameStatus: String, Codable {
     case gameOver
 }
 
-struct GameState: Codable, Equatable {
+struct GameState: Equatable {
     var grid: GameGrid
     var score: Int
     var highScore: Int
@@ -211,7 +211,7 @@ struct GameState: Codable, Equatable {
 
 // MARK: - Hand (3 blocks offered to player)
 
-struct BlockHand: Identifiable, Codable, Equatable {
+struct BlockHand: Identifiable {
     let id: UUID
     var blocks: [BlockShape]
     
@@ -243,7 +243,7 @@ struct BlockHand: Identifiable, Codable, Equatable {
     private func canPlaceAnywhere(_ block: BlockShape, on grid: GameGrid) -> Bool {
         for r in 0..<GameGrid.gridSize {
             for c in 0..<GameGrid.gridSize {
-                if grid.canPlace(block, at: r, c) {
+                if grid.canPlace(block, at: r, col: c) {
                     return true
                 }
             }
