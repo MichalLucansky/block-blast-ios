@@ -96,7 +96,10 @@ struct GameView: View {
                 .buttonStyle(.plain)
                 .disabled(!viewModel.hasSelectedBlock)
                 .animation(.easeInOut(duration: 0.15), value: viewModel.hasSelectedBlock)
-                .padding(.bottom, 4)
+
+                // Equal spacer above (grid) and below (hand) centres the rotate
+                // button in the gap between the board and the block selection.
+                Spacer(minLength: 8)
 
                 // Block hand
                 BlockHandComponent(
@@ -114,11 +117,13 @@ struct GameView: View {
 
                 Spacer(minLength: 8)
 
-                // AdMob banner near the bottom (fixed 320x50 ad format), with
-                // breathing room above the floating tab bar.
+                // AdMob banner (fixed 320x50 ad format). Equal spacers above
+                // (hand) and below (tab bar) centre it in the gap between the
+                // block selection and the floating tab bar.
                 BannerAdView()
                     .frame(width: 320, height: 50)
-                    .padding(.bottom, 16)
+
+                Spacer(minLength: 8)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
