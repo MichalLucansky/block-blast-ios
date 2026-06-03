@@ -21,6 +21,11 @@ final class StatsViewModel: ObservableObject {
     }
     
     // MARK: - Computed
+    var avgScore: Int {
+        guard gamesPlayed > 0 else { return 0 }
+        return highScore / max(gamesPlayed, 1)
+    }
+    
     var avgBlocksPerGame: Int {
         guard gamesPlayed > 0 else { return 0 }
         return totalBlocksPlaced / gamesPlayed
@@ -39,30 +44,35 @@ final class StatsViewModel: ObservableObject {
     // MARK: - Private
     private func observeStorage() {
         storage.$highScore
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] value in
                 self?.highScore = value
             }
             .store(in: &cancellables)
         
         storage.$gamesPlayed
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] value in
                 self?.gamesPlayed = value
             }
             .store(in: &cancellables)
         
         storage.$totalBlocksPlaced
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] value in
                 self?.totalBlocksPlaced = value
             }
             .store(in: &cancellables)
         
         storage.$totalLinesCleared
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] value in
                 self?.totalLinesCleared = value
             }
             .store(in: &cancellables)
         
         storage.$maxCombo
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] value in
                 self?.maxCombo = value
             }

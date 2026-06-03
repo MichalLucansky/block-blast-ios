@@ -3,6 +3,7 @@ import FactoryKit
 
 struct ContentView: View {
     @StateObject private var gameVM = Container.shared.gameViewModel()
+    @StateObject private var statsVM = Container.shared.statsViewModel()
     
     var body: some View {
         TabView {
@@ -17,7 +18,7 @@ struct ContentView: View {
                 }
         }
         .onAppear {
-            if gameVM.status == .playing && gameVM.grid.isEmpty() && gameVM.blocksPlaced == 0 {
+            if gameVM.status == .playing && gameVM.grid.isEmpty() {
                 gameVM.startNewGame()
             }
         }

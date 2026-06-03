@@ -3,7 +3,7 @@ name: BlockBlast
 options:
   bundleIdPrefix: com.lucansky
   deploymentTarget:
-    iOS: "18.0"
+    iOS: "26.0"
   xcodeVersion: "16.0"
 
 settings:
@@ -15,12 +15,15 @@ packages:
   Factory:
     url: https://github.com/hmlongco/Factory
     from: "3.0.4"
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
+    from: "12.0.0"
 
 targets:
   BlockBlast:
     type: application
     platform: iOS
-    deploymentTarget: "18.0"
+    deploymentTarget: "26.0"
     sources:
       - path: BlockBlast
         excludes:
@@ -28,6 +31,8 @@ targets:
     dependencies:
       - package: Factory
         product: FactoryKit
+      - package: GoogleMobileAds
+        product: GoogleMobileAds
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lucansky.blockblast
@@ -38,13 +43,12 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         TARGETED_DEVICE_FAMILY: "1"
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
 
   BlockBlastTests:
     type: bundle.unit-test
     platform: iOS
-    deploymentTarget: "18.0"
+    deploymentTarget: "26.0"
     sources:
       - path: BlockBlastTests
         excludes:

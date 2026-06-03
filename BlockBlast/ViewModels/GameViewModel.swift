@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import FactoryKit
 
 @MainActor
@@ -11,35 +12,37 @@ final class GameViewModel: ObservableObject {
     @Published var combo: Int = 0
     @Published var blocksPlaced: Int = 0
     @Published var selectedBlock: BlockShape?
-    @Published var rotationAngle: Int = 0 // 0, 90, 180, 270
     @Published var previewPosition: (row: Int, col: Int)?
     @Published var canPlaceAtPreview: Bool = false
     @Published var showGameOver = false
     @Published var newHighScore = false
-    @Published var linesClearedRows: Set<Int> = []
-    @Published var linesClearedCols: Set<Int> = []
+    @Published var linesClearedThisRound: Set<Int> = []
     @Published var showLineClearAnimation = false
+    @Published private(set) var revivesUsed = 0
+
+    /// Max number of rewarded "bonus life" revives allowed per game.
+    static let maxRevives = 1
+
+    /// How many rows the revive clears from the bottom of the board.
+    static let reviveRowsCleared = 3
     
     // MARK: - Dependencies
     @Injected(\.gameStorageManager) private var storage: GameStorageManager
     
-    /// Token to cancel stale animation timers.
-    private var animationToken: UUID?
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-        // No subscriptions needed — highScore accessed via computed property
+        observeStorage()
     }
     
     // MARK: - Computed
     
-    /// The currently selected block with rotation applied.
-    var activeBlock: BlockShape? {
-        selectedBlock?.rotated(by: rotationAngle)
-    }
-    
     var highScore: Int { storage.highScore }
     var isGameOver: Bool { status == .gameOver }
     var hasSelectedBlock: Bool { selectedBlock != nil }
+
+    /// Whether the player is eligible to spend a rewarded "bonus life" right now.
+    var canRevive: Bool { status == .gameOver && revivesUsed < Self.maxRevives }
     
     // MARK: - Actions
     
@@ -51,44 +54,111 @@ final class GameViewModel: ObservableObject {
         blocksPlaced = 0
         status = .playing
         selectedBlock = nil
-        rotationAngle = 0
         previewPosition = nil
         showGameOver = false
         newHighScore = false
-        linesClearedRows = []
-        linesClearedCols = []
+        linesClearedThisRound = []
         showLineClearAnimation = false
-        animationToken = nil
+        revivesUsed = 0
+    }
+
+    /// Grants a "bonus life" after watching a rewarded ad: clears the bottom rows
+    /// of the board for breathing room while keeping the structure the player
+    /// built above and their score. Deals a fresh hand only if the current blocks
+    /// still have nowhere to go, so the continue is always playable. No-op if the
+    /// player is not currently eligible (see `canRevive`).
+    func revive() {
+        guard canRevive else { return }
+        revivesUsed += 1
+
+        let bottomRows = Array((GameGrid.gridSize - Self.reviveRowsCleared)..<GameGrid.gridSize)
+        grid.clearLines((rows: bottomRows, cols: []))
+
+        status = .playing
+        combo = 0
+        selectedBlock = nil
+        previewPosition = nil
+        canPlaceAtPreview = false
+        showGameOver = false
+        linesClearedThisRound = []
+        showLineClearAnimation = false
+
+        // Guarantee the player can actually keep playing after the clear.
+        if !hand.hasValidMoves(on: grid) {
+            hand = BlockHand.generate()
+        }
     }
     
     func selectBlock(_ block: BlockShape?) {
         selectedBlock = block
-        rotationAngle = 0
         previewPosition = nil
         canPlaceAtPreview = false
     }
+
+    /// Rotates the currently selected block 90° clockwise. The matching hand
+    /// slot is updated too (same id) so the hand preview reflects the rotation,
+    /// and any active placement preview is re-evaluated. No-op if nothing is
+    /// selected.
+    func rotateSelectedBlock() {
+        guard status == .playing, let block = selectedBlock else { return }
+        let rotated = block.rotated()
+        selectedBlock = rotated
+        hand = BlockHand(blocks: hand.blocks.map { $0.id == rotated.id ? rotated : $0 })
+        if let pos = previewPosition {
+            canPlaceAtPreview = grid.canPlace(rotated, at: pos.row, col: pos.col)
+        }
+    }
     
-    /// Rotate the selected block 90° clockwise.
-    func rotateBlock() {
-        guard selectedBlock != nil else { return }
-        rotationAngle = (rotationAngle + 90) % 360
-        previewPosition = nil
-        canPlaceAtPreview = false
+    func previewAt(row: Int, col: Int) {
+        guard status == .playing, let block = selectedBlock else { return }
+        if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
+            previewPosition = anchor
+            canPlaceAtPreview = true
+        } else {
+            previewPosition = (row, col)
+            canPlaceAtPreview = false
+        }
+    }
+
+    /// Commits the block at the current preview position (the end of a drag/tap).
+    /// Places it if the preview is valid; otherwise clears the ghost but keeps the
+    /// block selected so the player can try another spot.
+    func commitPlacement() {
+        guard status == .playing else { return }
+        if canPlaceAtPreview {
+            placeBlock()
+        } else {
+            previewPosition = nil
+            canPlaceAtPreview = false
+        }
+    }
+
+    /// Resolves where to drop `block` when the player taps `(tapRow, tapCol)`.
+    /// Preference is to anchor the block's top-left at the tapped cell — exactly
+    /// how it looks in the hand (WYSIWYG). If that exact spot is blocked or runs
+    /// off the board, the block is nudged just enough to fit while still covering
+    /// the tapped cell: each of its cells (in top-left-first reading order, which
+    /// is how `cells` is stored) is tried under the tap and the first placement
+    /// that fits wins. Returns `nil` if nothing covering the tap fits.
+    func bestAnchor(for block: BlockShape, tapRow: Int, tapCol: Int) -> (row: Int, col: Int)? {
+        block.cells
+            .map { (row: tapRow - $0.row, col: tapCol - $0.col) }
+            .first { grid.canPlace(block, at: $0.row, col: $0.col) }
     }
     
     func placeBlock() {
-        guard let original = selectedBlock,
-              let pos = previewPosition else { return }
-        let block = original.rotated(by: rotationAngle)
-        guard grid.canPlace(block, at: pos.row, col: pos.col) else { return }
+        guard let block = selectedBlock,
+              let pos = previewPosition,
+              grid.canPlace(block, at: pos.row, col: pos.col) else { return }
         
-        // Place the block — assign new grid so @Published fires
-        grid = grid.placingBlock(block, at: pos.row, col: pos.col)
+        // Place the block
+        grid.placeBlock(block, at: pos.row, col: pos.col)
         blocksPlaced += 1
         storage.incrementBlocksPlaced()
         
         // Score for placing
         score += block.cellCount
+        combo = 0
         
         // Check for completed lines
         let lines = grid.completedLines()
@@ -103,94 +173,77 @@ final class GameViewModel: ObservableObject {
                 storage.updateMaxCombo(combo)
             }
             
-            // Clear lines immediately in the model — assign new grid so @Published fires
-            grid = grid.clearingLines(lines)
-            
-            // Trigger line clear animation (visual only) — cancellable
-            let token = UUID()
-            animationToken = token
-            linesClearedRows = Set(lines.rows)
-            linesClearedCols = Set(lines.cols)
+            // Trigger line clear animation
+            linesClearedThisRound = Set(lines.rows + lines.cols.map { $0 + 100 })
             showLineClearAnimation = true
             
+            // Clear lines after animation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                guard let self, self.animationToken == token else { return }
-                self.showLineClearAnimation = false
-                self.linesClearedRows = []
-                self.linesClearedCols = []
+                self?.grid.clearLines(lines)
+                self?.showLineClearAnimation = false
+                self?.linesClearedThisRound = []
             }
-        } else {
-            // No lines cleared — reset combo
-            combo = 0
         }
         
         // Remove placed block from hand
-        hand = BlockHand(blocks: hand.blocks.filter { $0.id != original.id })
+        hand = BlockHand(blocks: hand.blocks.filter { $0.id != block.id })
         selectedBlock = nil
-        rotationAngle = 0
         previewPosition = nil
         
         // If hand is empty, generate new hand
         if hand.blocks.isEmpty {
             hand = BlockHand.generate()
-        }
-        
-        // Check if remaining blocks can be placed (after hand refresh)
-        if !hand.hasValidMoves(on: grid) {
-            endGame()
-        }
-        
-        // Update high score (only when game is still active)
-        if status == .playing {
-            if score > storage.highScore {
-                newHighScore = true
+            // Check if any new blocks can be placed
+            if !hand.hasValidMoves(on: grid) {
+                endGame()
             }
-            storage.updateHighScore(score)
+        } else {
+            // Check if remaining blocks can be placed
+            if !hand.hasValidMoves(on: grid) {
+                endGame()
+            }
         }
+        
+        // Update high score
+        if score > storage.highScore {
+            newHighScore = true
+        }
+        storage.updateHighScore(score)
     }
     
     func cancelPlacement() {
         selectedBlock = nil
-        rotationAngle = 0
         previewPosition = nil
         canPlaceAtPreview = false
     }
     
     func tapGridCell(row: Int, col: Int) {
         guard status == .playing else { return }
-        guard let block = activeBlock else { return }
         
-        // Try each cell in the block shape as the anchor for the tapped position
-        // This lets the user tap any cell within the block's footprint
-        var placed = false
-        for cell in block.cells {
-            let anchorRow = row - cell.row
-            let anchorCol = col - cell.col
-            if grid.canPlace(block, at: anchorRow, col: anchorCol) {
-                previewPosition = (anchorRow, anchorCol)
+        if let block = selectedBlock {
+            // If we have a selected block, drop it centred on the tapped cell.
+            if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
+                previewPosition = anchor
                 canPlaceAtPreview = true
                 placeBlock()
-                placed = true
-                break
-            }
-        }
-        
-        // If we couldn't place, only show preview if the block actually fits
-        if !placed {
-            let valid = grid.canPlace(block, at: row, col: col)
-            if valid {
-                previewPosition = (row, col)
-                canPlaceAtPreview = true
             } else {
-                // Block doesn't fit anywhere near this tap — clear preview
-                previewPosition = nil
-                canPlaceAtPreview = false
+                cancelPlacement()
+            }
+        } else {
+            // Try to find a hand block that can be dropped over the tapped cell.
+            for block in hand.blocks {
+                if let anchor = bestAnchor(for: block, tapRow: row, tapCol: col) {
+                    selectedBlock = block
+                    previewPosition = anchor
+                    canPlaceAtPreview = true
+                    placeBlock()
+                    return
+                }
             }
         }
     }
     
     func endGame() {
-        guard blocksPlaced > 0 else { return }
         status = .gameOver
         storage.incrementGamesPlayed()
         if score > storage.highScore {
@@ -198,5 +251,15 @@ final class GameViewModel: ObservableObject {
         }
         storage.updateHighScore(score)
         showGameOver = true
+    }
+    
+    // MARK: - Private
+    
+    private func observeStorage() {
+        storage.$highScore
+            .sink { [weak self] _ in
+                // High score updated externally
+            }
+            .store(in: &cancellables)
     }
 }

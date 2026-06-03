@@ -3,15 +3,12 @@ import SwiftUI
 struct BlockHandComponent: View {
     let hand: BlockHand
     let selectedBlock: BlockShape?
-    let rotationAngle: Int
     let onSelect: (BlockShape) -> Void
     
     var body: some View {
         HStack(spacing: 20) {
-            ForEach(hand.blocks) { (block: BlockShape) in
-                let isSel = selectedBlock?.id == block.id
-                let display = isSel ? block.rotated(by: rotationAngle) : block
-                BlockPreview(block: display, isSelected: isSel)
+            ForEach(hand.blocks) { block in
+                BlockPreview(block: block, isSelected: selectedBlock?.id == block.id)
                     .frame(maxWidth: .infinity, maxHeight: 80)
                     .onTapGesture {
                         onSelect(block)
@@ -42,7 +39,7 @@ struct BlockPreview: View {
                         ForEach(0..<block.width, id: \.self) { col in
                             if block.cells.contains(where: { $0.row == row && $0.col == col }) {
                                 RoundedRectangle(cornerRadius: 2)
-                                    .fill(block.color.swiftUIColor)
+                                    .fill(block.color)
                                     .frame(width: cellSize, height: cellSize)
                             } else {
                                 Color.clear
@@ -56,6 +53,6 @@ struct BlockPreview: View {
     }
     
     private var cellSize: CGFloat {
-        min(12.0, 60.0 / CGFloat(max(block.width, block.height)))
+        min(12, 60 / CGFloat(max(block.width, block.height)))
     }
 }

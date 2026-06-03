@@ -2,52 +2,73 @@ import SwiftUI
 
 struct GridComponent: View {
     let grid: GameGrid
-    let activeBlock: BlockShape? // The rotated shape to preview
+    let selectedBlock: BlockShape?
     let previewPosition: (row: Int, col: Int)?
     let canPlaceAtPreview: Bool
-    let linesClearedRows: Set<Int>
-    let linesClearedCols: Set<Int>
+    let linesCleared: Set<Int>
     let showAnimation: Bool
-    let onTap: (Int, Int) -> Void
-    
+    /// Called continuously as the finger moves over a cell (drives the ghost).
+    let onPreview: (Int, Int) -> Void
+    /// Called when the finger lifts (commits the placement at the preview).
+    let onCommit: () -> Void
+
+    private let inset: CGFloat = 4
+    private let spacing: CGFloat = 2
+
     var body: some View {
-        VStack(spacing: 2) {
-            ForEach(0..<GameGrid.gridSize, id: \.self) { row in
-                HStack(spacing: 2) {
-                    ForEach(0..<GameGrid.gridSize, id: \.self) { col in
-                        CellView(
-                            color: grid.cells[row][col],
-                            isPreview: isPreviewCell(row, col),
-                            canPlace: canPlaceAtPreview,
-                            isCleared: linesClearedRows.contains(row) || linesClearedCols.contains(col),
-                            showAnimation: showAnimation
-                        )
-                        .aspectRatio(1, contentMode: .fit)
-                        .onTapGesture {
-                            onTap(row, col)
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            let cell = (side - inset * 2 - spacing * CGFloat(GameGrid.gridSize - 1)) / CGFloat(GameGrid.gridSize)
+
+            VStack(spacing: spacing) {
+                ForEach(0..<GameGrid.gridSize, id: \.self) { row in
+                    HStack(spacing: spacing) {
+                        ForEach(0..<GameGrid.gridSize, id: \.self) { col in
+                            CellView(
+                                color: grid.cells[row][col],
+                                isPreview: isPreviewCell(row, col),
+                                canPlace: canPlaceAtPreview,
+                                isCleared: linesCleared.contains(row),
+                                showAnimation: showAnimation
+                            )
                         }
                     }
                 }
             }
+            .padding(inset)
+            .frame(width: side, height: side)
+            .background(Color(.systemGray5))
+            .cornerRadius(12)
+            .contentShape(Rectangle())
+            .gesture(
+                // A single drag gesture handles both taps and drags: it fires a
+                // live preview as the finger moves and commits on release.
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        if let (r, c) = cellAt(value.location, cellSize: cell) {
+                            onPreview(r, c)
+                        }
+                    }
+                    .onEnded { _ in onCommit() }
+            )
         }
-        .padding(4)
-        .background(Color(.systemGray5))
-        .cornerRadius(12)
     }
-    
+
+    /// Maps a touch point (in the grid's local space) to a grid cell, or nil if
+    /// the point falls outside the 8x8 board.
+    private func cellAt(_ point: CGPoint, cellSize: CGFloat) -> (Int, Int)? {
+        let step = cellSize + spacing
+        let col = Int((point.x - inset) / step)
+        let row = Int((point.y - inset) / step)
+        guard (0..<GameGrid.gridSize).contains(row), (0..<GameGrid.gridSize).contains(col) else { return nil }
+        return (row, col)
+    }
+
     private func isPreviewCell(_ row: Int, _ col: Int) -> Bool {
-        guard let block = activeBlock, let pos = previewPosition else { return false }
+        guard let block = selectedBlock, let pos = previewPosition else { return false }
         for cell in block.cells {
             if row == pos.row + cell.row && col == pos.col + cell.col {
-                // Only render preview cells that don't overlap occupied cells
-                let gridRow = pos.row + cell.row
-                let gridCol = pos.col + cell.col
-                if gridRow >= 0 && gridRow < GameGrid.gridSize &&
-                   gridCol >= 0 && gridCol < GameGrid.gridSize &&
-                   grid.cells[gridRow][gridCol] == nil {
-                    return true
-                }
-                return false
+                return true
             }
         }
         return false
@@ -55,7 +76,7 @@ struct GridComponent: View {
 }
 
 struct CellView: View {
-    let color: BlockColor?
+    let color: Color?
     let isPreview: Bool
     let canPlace: Bool
     let isCleared: Bool
@@ -64,7 +85,7 @@ struct CellView: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 4)
             .fill(
-                color?.swiftUIColor ?? (isPreview ? (canPlace ? Color.green.opacity(0.5) : Color.red.opacity(0.5)) : Color(.systemGray4))
+                color ?? (isPreview ? (canPlace ? Color.green.opacity(0.5) : Color.red.opacity(0.5)) : Color(.systemGray4))
             )
             .overlay {
                 if isCleared && showAnimation {

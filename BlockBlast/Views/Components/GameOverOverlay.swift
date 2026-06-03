@@ -3,6 +3,9 @@ import SwiftUI
 struct GameOverOverlay: View {
     let score: Int
     let newHighScore: Bool
+    /// Whether a rewarded "bonus life" is currently available to offer.
+    var canWatchAd: Bool = false
+    var onWatchAd: () -> Void = {}
     let onPlayAgain: () -> Void
     
     var body: some View {
@@ -29,6 +32,24 @@ struct GameOverOverlay: View {
                         .foregroundColor(.blue)
                 }
                 
+                if canWatchAd {
+                    Button {
+                        onWatchAd()
+                    } label: {
+                        Label("BONUS LIFE", systemImage: "play.rectangle.fill")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 32)
+                            .padding(.vertical, 16)
+                            .background(Color.green)
+                            .cornerRadius(12)
+                    }
+                    .buttonStyle(.plain)
+                    .shadow(radius: 4)
+                    .transition(.scale.combined(with: .opacity))
+                }
+
                 Button {
                     onPlayAgain()
                 } label: {
