@@ -6,16 +6,21 @@ extension Container {
         self { GameStorageManager() }
             .singleton
     }
-    
+
     @MainActor
     var gameViewModel: Factory<GameViewModel> {
         self { GameViewModel() }
-            .singleton // persistent game state — survives view lifecycle
     }
-    
+
     @MainActor
     var statsViewModel: Factory<StatsViewModel> {
         self { StatsViewModel() }
+            .singleton
+    }
+
+    @MainActor
+    var adManager: Factory<AdManager> {
+        self { AdManager() }
             .singleton
     }
 }

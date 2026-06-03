@@ -1,49 +1,15 @@
 import Foundation
 import SwiftUI
 
-// MARK: - Domain Color
-
-/// Domain-safe color that doesn't depend on SwiftUI.
-enum BlockColor: String, Codable, Equatable, CaseIterable {
-    case yellow, blue, green, orange, red, purple, pink, cyan, mint, teal, indigo, brown
-}
-
-extension BlockColor {
-    var swiftUIColor: SwiftUI.Color {
-        switch self {
-        case .yellow: return .yellow
-        case .blue: return .blue
-        case .green: return .green
-        case .orange: return .orange
-        case .red: return .red
-        case .purple: return .purple
-        case .pink: return .pink
-        case .cyan: return .cyan
-        case .mint: return .mint
-        case .teal: return .teal
-        case .indigo: return .indigo
-        case .brown: return .brown
-        }
-    }
-}
-
-// MARK: - Cell Coordinate
-
-/// A cell position within a block shape.
-struct Cell: Codable, Equatable, Hashable {
-    let row: Int
-    let col: Int
-}
-
 // MARK: - Block Shape Definitions
 
 /// A block shape is defined by its cells relative to a top-left anchor.
-struct BlockShape: Identifiable, Codable, Equatable {
+struct BlockShape: Identifiable {
     let id: UUID
-    let cells: [Cell]
-    let color: BlockColor
+    let cells: [(row: Int, col: Int)]
+    let color: Color
     
-    init(id: UUID = UUID(), cells: [Cell], color: BlockColor) {
+    init(id: UUID = UUID(), cells: [(row: Int, col: Int)], color: Color) {
         self.id = id
         self.cells = cells.sorted { $0.row < $1.row || ($0.row == $1.row && $0.col < $1.col) }
         self.color = color
@@ -52,25 +18,18 @@ struct BlockShape: Identifiable, Codable, Equatable {
     var width: Int { cells.map(\.col).max()! + 1 }
     var height: Int { cells.map(\.row).max()! + 1 }
     var cellCount: Int { cells.count }
-    
-    /// Rotate this shape 90° clockwise.
-    /// Formula: new_row = col, new_col = (height - 1) - row
-    func rotated90Clockwise() -> BlockShape {
-        let h = self.height
-        let rotatedCells = self.cells.map { cell in
-            Cell(row: cell.col, col: (h - 1) - cell.row)
-        }
-        return BlockShape(id: self.id, cells: rotatedCells, color: self.color)
-    }
-    
-    /// Apply the given rotation angle (0, 90, 180, 270) and return the rotated shape.
-    func rotated(by angle: Int) -> BlockShape {
-        switch angle {
-        case 90:  return rotated90Clockwise()
-        case 180: return rotated90Clockwise().rotated90Clockwise()
-        case 270: return rotated90Clockwise().rotated90Clockwise().rotated90Clockwise()
-        default:  return self
-        }
+
+    /// Returns the same block rotated 90° clockwise, re-normalized so its cells
+    /// are still anchored at a (0, 0) top-left origin. Keeps the same `id` and
+    /// `color` so it remains the same hand slot after rotation.
+    func rotated() -> BlockShape {
+        let maxRow = cells.map(\.row).max() ?? 0
+        // 90° clockwise: (row, col) -> (col, maxRow - row).
+        let rotated = cells.map { (row: $0.col, col: maxRow - $0.row) }
+        let minRow = rotated.map(\.row).min() ?? 0
+        let minCol = rotated.map(\.col).min() ?? 0
+        let normalized = rotated.map { (row: $0.row - minRow, col: $0.col - minCol) }
+        return BlockShape(id: id, cells: normalized, color: color)
     }
 }
 
@@ -95,7 +54,7 @@ extension BlockShape {
         .l3x2, .l3x2Mirror, .l2x3, .l2x3Mirror,
         
         // T shapes
-        .t3x2, .t2x3, .t3x2Down, .t2x3Right,
+        .t3x2, .t2x3, .t3x2Up, .t2x3Left,
         
         // S/Z shapes
         .s3x2, .z3x2, .s2x3, .z2x3,
@@ -108,58 +67,58 @@ extension BlockShape {
     ]
     
     // Single
-    static let single = BlockShape(cells: [Cell(row: 0, col: 0)], color: .yellow)
+    static let single = BlockShape(cells: [(0, 0)], color: .yellow)
     
     // 1xN horizontal
-    static let bar1x2H = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1)], color: .blue)
-    static let bar1x3H = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2)], color: .blue)
-    static let bar1x4H = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 0, col: 3)], color: .blue)
-    static let bar1x5H = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 0, col: 3), Cell(row: 0, col: 4)], color: .blue)
+    static let bar1x2H = BlockShape(cells: [(0, 0), (0, 1)], color: .blue)
+    static let bar1x3H = BlockShape(cells: [(0, 0), (0, 1), (0, 2)], color: .blue)
+    static let bar1x4H = BlockShape(cells: [(0, 0), (0, 1), (0, 2), (0, 3)], color: .blue)
+    static let bar1x5H = BlockShape(cells: [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)], color: .blue)
     
     // 1xN vertical
-    static let bar1x2V = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0)], color: .green)
-    static let bar1x3V = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 2, col: 0)], color: .green)
-    static let bar1x4V = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 2, col: 0), Cell(row: 3, col: 0)], color: .green)
-    static let bar1x5V = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 2, col: 0), Cell(row: 3, col: 0), Cell(row: 4, col: 0)], color: .green)
+    static let bar1x2V = BlockShape(cells: [(0, 0), (1, 0)], color: .green)
+    static let bar1x3V = BlockShape(cells: [(0, 0), (1, 0), (2, 0)], color: .green)
+    static let bar1x4V = BlockShape(cells: [(0, 0), (1, 0), (2, 0), (3, 0)], color: .green)
+    static let bar1x5V = BlockShape(cells: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)], color: .green)
     
     // 2xN
-    static let bar2x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1)], color: .orange)
-    static let bar2x3 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 1, col: 2)], color: .orange)
-    static let bar3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 0), Cell(row: 2, col: 1)], color: .orange)
+    static let bar2x2 = BlockShape(cells: [(0, 0), (0, 1), (1, 0), (1, 1)], color: .orange)
+    static let bar2x3 = BlockShape(cells: [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)], color: .orange)
+    static let bar3x2 = BlockShape(cells: [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1)], color: .orange)
     
     // L shapes
-    static let l2x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1)], color: .red)
-    static let l2x2Mirror = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1)], color: .red)
-    static let l3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 2, col: 0), Cell(row: 2, col: 1)], color: .purple)
-    static let l3x2Mirror = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 1, col: 1), Cell(row: 2, col: 0), Cell(row: 2, col: 1)], color: .purple)
-    static let l2x3 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 1, col: 2)], color: .purple)
-    static let l2x3Mirror = BlockShape(cells: [Cell(row: 0, col: 2), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 1, col: 2)], color: .purple)
+    static let l2x2 = BlockShape(cells: [(0, 0), (1, 0), (1, 1)], color: .red)
+    static let l2x2Mirror = BlockShape(cells: [(0, 1), (1, 0), (1, 1)], color: .red)
+    static let l3x2 = BlockShape(cells: [(0, 0), (1, 0), (2, 0), (2, 1)], color: .purple)
+    static let l3x2Mirror = BlockShape(cells: [(0, 1), (1, 1), (2, 0), (2, 1)], color: .purple)
+    static let l2x3 = BlockShape(cells: [(0, 0), (1, 0), (1, 1), (1, 2)], color: .purple)
+    static let l2x3Mirror = BlockShape(cells: [(0, 2), (1, 0), (1, 1), (1, 2)], color: .purple)
     
     // T shapes
-    static let t3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 0)], color: .pink)
-    static let t2x3 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 1)], color: .pink)
-    static let t3x2Down = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 1)], color: .mint)
-    static let t2x3Right = BlockShape(cells: [Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 1, col: 2), Cell(row: 0, col: 1)], color: .mint)
+    static let t3x2 = BlockShape(cells: [(0, 0), (1, 0), (1, 1), (2, 0)], color: .pink)
+    static let t2x3 = BlockShape(cells: [(0, 0), (0, 1), (0, 2), (1, 1)], color: .pink)
+    static let t3x2Up = BlockShape(cells: [(0, 0), (1, 0), (1, 1), (2, 0)], color: .mint)
+    static let t2x3Left = BlockShape(cells: [(0, 0), (0, 1), (0, 2), (1, 1)], color: .mint)
     
     // S/Z shapes
-    static let s3x2 = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 0)], color: .cyan)
-    static let z3x2 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 2, col: 1)], color: .cyan)
-    static let s2x3 = BlockShape(cells: [Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 0), Cell(row: 1, col: 1)], color: .teal)
-    static let z2x3 = BlockShape(cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 1, col: 1), Cell(row: 1, col: 2)], color: .teal)
+    static let s3x2 = BlockShape(cells: [(0, 1), (1, 0), (1, 1), (2, 0)], color: .cyan)
+    static let z3x2 = BlockShape(cells: [(0, 0), (0, 1), (1, 0), (1, 1), (2, 1)], color: .cyan)
+    static let s2x3 = BlockShape(cells: [(0, 1), (0, 2), (1, 0), (1, 1)], color: .teal)
+    static let z2x3 = BlockShape(cells: [(0, 0), (0, 1), (1, 1), (1, 2)], color: .teal)
     
     // Square
     static let square3x3 = BlockShape(
-        cells: [Cell(row: 0, col: 0), Cell(row: 0, col: 1), Cell(row: 0, col: 2), Cell(row: 1, col: 0), Cell(row: 1, col: 1), Cell(row: 1, col: 2), Cell(row: 2, col: 0), Cell(row: 2, col: 1), Cell(row: 2, col: 2)],
+        cells: [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)],
         color: .indigo
     )
     
     // Big L
     static let l3x3 = BlockShape(
-        cells: [Cell(row: 0, col: 0), Cell(row: 1, col: 0), Cell(row: 2, col: 0), Cell(row: 2, col: 1), Cell(row: 2, col: 2)],
+        cells: [(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)],
         color: .brown
     )
     static let l3x3Mirror = BlockShape(
-        cells: [Cell(row: 0, col: 2), Cell(row: 1, col: 2), Cell(row: 2, col: 0), Cell(row: 2, col: 1), Cell(row: 2, col: 2)],
+        cells: [(0, 2), (1, 2), (2, 0), (2, 1), (2, 2)],
         color: .brown
     )
 }
@@ -167,30 +126,28 @@ extension BlockShape {
 // MARK: - Grid
 
 /// The game grid - 8x8 board.
-struct GameGrid: Codable, Equatable {
+struct GameGrid: Equatable {
     static let gridSize = 8
     
-    /// nil = empty, BlockColor = filled
-    var cells: [[BlockColor?]]
+    /// nil = empty, Color = filled
+    var cells: [[Color?]]
     
     init() {
-        self.cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
+        self.cells = Array(repeating: Array(repeating: Color?.none, count: Self.gridSize), count: Self.gridSize)
     }
-    
-    func placingBlock(_ shape: BlockShape, at row: Int, col: Int) -> GameGrid {
-        var newGrid = self
+
+    mutating func placeBlock(_ shape: BlockShape, at row: Int, col: Int) {
         for cell in shape.cells {
-            newGrid.cells[row + cell.row][col + cell.col] = shape.color
+            cells[row + cell.row][col + cell.col] = shape.color
         }
-        return newGrid
     }
     
     func canPlace(_ shape: BlockShape, at row: Int, col: Int) -> Bool {
         for cell in shape.cells {
-            let r = row + cell.row
-            let c = col + cell.col
-            guard r >= 0 && r < Self.gridSize && c >= 0 && c < Self.gridSize else { return false }
-            guard cells[r][c] == nil else { return false }
+            let targetRow = row + cell.row
+            let targetCol = col + cell.col
+            guard targetRow >= 0 && targetRow < Self.gridSize && targetCol >= 0 && targetCol < Self.gridSize else { return false }
+            guard cells[targetRow][targetCol] == nil else { return false }
         }
         return true
     }
@@ -200,47 +157,43 @@ struct GameGrid: Codable, Equatable {
         var rows: [Int] = []
         var cols: [Int] = []
         
-        for r in 0..<Self.gridSize {
-            if cells[r].allSatisfy({ $0 != nil }) {
-                rows.append(r)
+        for row in 0..<Self.gridSize {
+            if cells[row].allSatisfy({ $0 != nil }) {
+                rows.append(row)
             }
         }
-        
-        for c in 0..<Self.gridSize {
+
+        for col in 0..<Self.gridSize {
             var complete = true
-            for r in 0..<Self.gridSize {
-                if cells[r][c] == nil {
+            for row in 0..<Self.gridSize {
+                if cells[row][col] == nil {
                     complete = false
                     break
                 }
             }
-            if complete { cols.append(c) }
+            if complete { cols.append(col) }
         }
         
         return (rows, cols)
     }
     
-    func clearingLines(_ lines: (rows: [Int], cols: [Int])) -> GameGrid {
-        var newGrid = self
-        for r in lines.rows {
-            newGrid.cells[r] = Array(repeating: nil, count: Self.gridSize)
+    mutating func clearLines(_ lines: (rows: [Int], cols: [Int])) {
+        for row in lines.rows {
+            cells[row] = Array(repeating: nil, count: Self.gridSize)
         }
-        for c in lines.cols {
-            for r in 0..<Self.gridSize {
-                newGrid.cells[r][c] = nil
+        for col in lines.cols {
+            for row in 0..<Self.gridSize {
+                cells[row][col] = nil
             }
         }
-        return newGrid
     }
     
     func isEmpty() -> Bool {
         cells.allSatisfy { row in row.allSatisfy { $0 == nil } }
     }
     
-    func cleared() -> GameGrid {
-        var newGrid = self
-        newGrid.cells = Array(repeating: Array(repeating: BlockColor?.none, count: Self.gridSize), count: Self.gridSize)
-        return newGrid
+    mutating func clear() {
+        cells = Array(repeating: Array(repeating: Color?.none, count: Self.gridSize), count: Self.gridSize)
     }
 }
 
@@ -251,7 +204,7 @@ enum GameStatus: String, Codable {
     case gameOver
 }
 
-struct GameState: Codable, Equatable {
+struct GameState: Equatable {
     var grid: GameGrid
     var score: Int
     var highScore: Int
@@ -271,7 +224,7 @@ struct GameState: Codable, Equatable {
 
 // MARK: - Hand (3 blocks offered to player)
 
-struct BlockHand: Identifiable, Codable, Equatable {
+struct BlockHand: Identifiable {
     let id: UUID
     var blocks: [BlockShape]
     
@@ -301,21 +254,10 @@ struct BlockHand: Identifiable, Codable, Equatable {
     }
     
     private func canPlaceAnywhere(_ block: BlockShape, on grid: GameGrid) -> Bool {
-        // Check all distinct rotations (up to 4)
-        var orientations: [BlockShape] = []
-        var current = block
-        for _ in 0..<4 {
-            if !orientations.contains(current) {
-                orientations.append(current)
-            }
-            current = current.rotated90Clockwise()
-        }
-        for orientation in orientations {
-            for r in 0..<GameGrid.gridSize {
-                for c in 0..<GameGrid.gridSize {
-                    if grid.canPlace(orientation, at: r, col: c) {
-                        return true
-                    }
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                if grid.canPlace(block, at: row, col: col) {
+                    return true
                 }
             }
         }

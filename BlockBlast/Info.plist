@@ -6,16 +6,35 @@
     <string>Block Blast</string>
     <key>CFBundleDisplayName</key>
     <string>Block Blast</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
     <key>CFBundleIdentifier</key>
     <string>com.lucansky.blockblast</string>
+    <!-- AdMob: Google's public TEST application identifier. Replace with your own before release. -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-3940256099942544~1458002511</string>
+    <key>SKAdNetworkItems</key>
+    <array>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cstr6suwn9.skadnetwork</string>
+        </dict>
+    </array>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
-    <key>UILaunchScreenGeneration</key>
-    <true/>
+    <!-- An (empty) UILaunchScreen dictionary opts the app into full-screen,
+         native-resolution rendering on all devices. Without it iOS runs the app
+         letterboxed in a scaled compatibility window. -->
+    <key>UILaunchScreen</key>
+    <dict/>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
         <string>arm64</string>

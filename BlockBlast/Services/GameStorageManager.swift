@@ -7,9 +7,9 @@ enum UserDefaultsKey: String {
     case blocksPlaced = "blockblast.blocksplaced"
     case linesCleared = "blockblast.linescleared"
     case maxCombo = "blockblast.maxcombo"
+    case bestScore = "blockblast.bestsore"
 }
 
-@MainActor
 final class GameStorageManager: ObservableObject {
     @Published private(set) var highScore: Int = 0
     @Published private(set) var gamesPlayed: Int = 0
@@ -31,29 +31,29 @@ final class GameStorageManager: ObservableObject {
     func updateHighScore(_ score: Int) {
         if score > highScore {
             highScore = score
-            userDefaults.set(highScore, forKey: UserDefaultsKey.highScore.rawValue)
+            persist()
         }
     }
     
     func incrementGamesPlayed() {
         gamesPlayed += 1
-        userDefaults.set(gamesPlayed, forKey: UserDefaultsKey.gamesPlayed.rawValue)
+        persist()
     }
     
     func incrementBlocksPlaced(_ count: Int = 1) {
         totalBlocksPlaced += count
-        userDefaults.set(totalBlocksPlaced, forKey: UserDefaultsKey.blocksPlaced.rawValue)
+        persist()
     }
     
     func incrementLinesCleared(_ count: Int) {
         totalLinesCleared += count
-        userDefaults.set(totalLinesCleared, forKey: UserDefaultsKey.linesCleared.rawValue)
+        persist()
     }
     
     func updateMaxCombo(_ combo: Int) {
         if combo > maxCombo {
             maxCombo = combo
-            userDefaults.set(maxCombo, forKey: UserDefaultsKey.maxCombo.rawValue)
+            persist()
         }
     }
     
@@ -63,11 +63,7 @@ final class GameStorageManager: ObservableObject {
         totalBlocksPlaced = 0
         totalLinesCleared = 0
         maxCombo = 0
-        userDefaults.set(highScore, forKey: UserDefaultsKey.highScore.rawValue)
-        userDefaults.set(gamesPlayed, forKey: UserDefaultsKey.gamesPlayed.rawValue)
-        userDefaults.set(totalBlocksPlaced, forKey: UserDefaultsKey.blocksPlaced.rawValue)
-        userDefaults.set(totalLinesCleared, forKey: UserDefaultsKey.linesCleared.rawValue)
-        userDefaults.set(maxCombo, forKey: UserDefaultsKey.maxCombo.rawValue)
+        persist()
     }
     
     private func load() {
@@ -76,5 +72,13 @@ final class GameStorageManager: ObservableObject {
         totalBlocksPlaced = userDefaults.integer(forKey: UserDefaultsKey.blocksPlaced.rawValue)
         totalLinesCleared = userDefaults.integer(forKey: UserDefaultsKey.linesCleared.rawValue)
         maxCombo = userDefaults.integer(forKey: UserDefaultsKey.maxCombo.rawValue)
+    }
+    
+    private func persist() {
+        userDefaults.set(highScore, forKey: UserDefaultsKey.highScore.rawValue)
+        userDefaults.set(gamesPlayed, forKey: UserDefaultsKey.gamesPlayed.rawValue)
+        userDefaults.set(totalBlocksPlaced, forKey: UserDefaultsKey.blocksPlaced.rawValue)
+        userDefaults.set(totalLinesCleared, forKey: UserDefaultsKey.linesCleared.rawValue)
+        userDefaults.set(maxCombo, forKey: UserDefaultsKey.maxCombo.rawValue)
     }
 }
