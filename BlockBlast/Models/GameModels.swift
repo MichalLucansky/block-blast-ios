@@ -144,10 +144,10 @@ struct GameGrid: Equatable {
     
     func canPlace(_ shape: BlockShape, at row: Int, col: Int) -> Bool {
         for cell in shape.cells {
-            let r = row + cell.row
-            let c = col + cell.col
-            guard r >= 0 && r < Self.gridSize && c >= 0 && c < Self.gridSize else { return false }
-            guard cells[r][c] == nil else { return false }
+            let targetRow = row + cell.row
+            let targetCol = col + cell.col
+            guard targetRow >= 0 && targetRow < Self.gridSize && targetCol >= 0 && targetCol < Self.gridSize else { return false }
+            guard cells[targetRow][targetCol] == nil else { return false }
         }
         return true
     }
@@ -157,33 +157,33 @@ struct GameGrid: Equatable {
         var rows: [Int] = []
         var cols: [Int] = []
         
-        for r in 0..<Self.gridSize {
-            if cells[r].allSatisfy({ $0 != nil }) {
-                rows.append(r)
+        for row in 0..<Self.gridSize {
+            if cells[row].allSatisfy({ $0 != nil }) {
+                rows.append(row)
             }
         }
 
-        for c in 0..<Self.gridSize {
+        for col in 0..<Self.gridSize {
             var complete = true
-            for r in 0..<Self.gridSize {
-                if cells[r][c] == nil {
+            for row in 0..<Self.gridSize {
+                if cells[row][col] == nil {
                     complete = false
                     break
                 }
             }
-            if complete { cols.append(c) }
+            if complete { cols.append(col) }
         }
         
         return (rows, cols)
     }
     
     mutating func clearLines(_ lines: (rows: [Int], cols: [Int])) {
-        for r in lines.rows {
-            cells[r] = Array(repeating: nil, count: Self.gridSize)
+        for row in lines.rows {
+            cells[row] = Array(repeating: nil, count: Self.gridSize)
         }
-        for c in lines.cols {
-            for r in 0..<Self.gridSize {
-                cells[r][c] = nil
+        for col in lines.cols {
+            for row in 0..<Self.gridSize {
+                cells[row][col] = nil
             }
         }
     }
@@ -254,9 +254,9 @@ struct BlockHand: Identifiable {
     }
     
     private func canPlaceAnywhere(_ block: BlockShape, on grid: GameGrid) -> Bool {
-        for r in 0..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize {
-                if grid.canPlace(block, at: r, col: c) {
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                if grid.canPlace(block, at: row, col: col) {
                     return true
                 }
             }

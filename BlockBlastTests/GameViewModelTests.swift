@@ -92,9 +92,9 @@ final class GameViewModelTests: XCTestCase {
     func test_commitPlacement_invalidPreview_keepsSelectionAndPlacesNothing() {
         // Fill the board so nothing fits.
         var grid = GameGrid()
-        for r in 0..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize {
-                grid.placeBlock(BlockShape.single, at: r, col: c)
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: row, col: col)
             }
         }
         viewModel.grid = grid
@@ -148,9 +148,9 @@ final class GameViewModelTests: XCTestCase {
     func test_tapGridCell_invalidPosition_doesNothing() {
         // Fully occupy the board so no tap can place anything.
         var grid = GameGrid()
-        for r in 0..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize {
-                grid.placeBlock(BlockShape.single, at: r, col: c)
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: row, col: col)
             }
         }
         viewModel.grid = grid
@@ -201,8 +201,8 @@ final class GameViewModelTests: XCTestCase {
         viewModel.tapGridCell(row: 7, col: 1)
 
         XCTAssertEqual(viewModel.blocksPlaced, 1)
-        for c in 0...4 {
-            XCTAssertNotNil(viewModel.grid.cells[7][c], "Bar shifted to cols 0..4")
+        for col in 0...4 {
+            XCTAssertNotNil(viewModel.grid.cells[7][col], "Bar shifted to cols 0..4")
         }
         XCTAssertNotNil(viewModel.grid.cells[7][1], "Tapped cell is covered")
     }
@@ -230,8 +230,8 @@ final class GameViewModelTests: XCTestCase {
     func test_completeRow_clearsAndScores() {
         // Fill a row manually
         var grid = GameGrid()
-        for c in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: 0, col: c)
+        for col in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: 0, col: col)
         }
         viewModel.grid = grid
         
@@ -270,7 +270,7 @@ final class GameViewModelTests: XCTestCase {
     
     func test_emptyHand_generatesNewHand() {
         // Place all 3 blocks
-        for i in 0..<3 {
+        for _ in 0..<3 {
             guard let block = viewModel.hand.blocks.first else { break }
             viewModel.selectBlock(block)
             if let pos = findValidPosition(for: block, on: viewModel.grid) {
@@ -325,10 +325,10 @@ final class GameViewModelTests: XCTestCase {
     func test_revive_clearsBottomRowsKeepsTopAndScore() {
         // Fill the top row and the bottom rows so we can verify what's cleared.
         var grid = GameGrid()
-        for c in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: 0, col: c)
-            for r in (GameGrid.gridSize - GameViewModel.reviveRowsCleared)..<GameGrid.gridSize {
-                grid.placeBlock(BlockShape.single, at: r, col: c)
+        for col in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: 0, col: col)
+            for row in (GameGrid.gridSize - GameViewModel.reviveRowsCleared)..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: row, col: col)
             }
         }
         viewModel.grid = grid
@@ -342,9 +342,9 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.score, 120, "Revive keeps the player's score")
 
         // The bottom rows are cleared for breathing room...
-        for r in (GameGrid.gridSize - GameViewModel.reviveRowsCleared)..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize {
-                XCTAssertNil(viewModel.grid.cells[r][c], "Bottom rows are cleared")
+        for row in (GameGrid.gridSize - GameViewModel.reviveRowsCleared)..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                XCTAssertNil(viewModel.grid.cells[row][col], "Bottom rows are cleared")
             }
         }
         // ...while the structure above is kept.
@@ -375,10 +375,10 @@ final class GameViewModelTests: XCTestCase {
     /// a cell the block occupies, not merely its (possibly empty) bounding-box
     /// corner.
     private func findValidPosition(for block: BlockShape, on grid: GameGrid) -> (row: Int, col: Int)? {
-        for r in 0..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize where grid.canPlace(block, at: r, col: c) {
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize where grid.canPlace(block, at: row, col: col) {
                 let covered = block.cells[0]
-                return (r + covered.row, c + covered.col)
+                return (row + covered.row, col + covered.col)
             }
         }
         return nil

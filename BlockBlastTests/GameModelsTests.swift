@@ -27,10 +27,10 @@ final class GameModelsTests: XCTestCase {
     
     func test_blockShape_cellsSorted() {
         let shape = BlockShape.l3x2
-        for i in 1..<shape.cells.count {
+        for index in 1..<shape.cells.count {
             XCTAssert(
-                shape.cells[i - 1].row < shape.cells[i].row ||
-                (shape.cells[i - 1].row == shape.cells[i].row && shape.cells[i - 1].col <= shape.cells[i].col),
+                shape.cells[index - 1].row < shape.cells[index].row ||
+                (shape.cells[index - 1].row == shape.cells[index].row && shape.cells[index - 1].col <= shape.cells[index].col),
                 "Cells should be sorted"
             )
         }
@@ -115,9 +115,9 @@ final class GameModelsTests: XCTestCase {
         var grid = GameGrid()
         XCTAssertTrue(grid.canPlace(BlockShape.square3x3, at: 0, col: 0))
         grid.placeBlock(BlockShape.square3x3, at: 0, col: 0)
-        for r in 0..<3 {
-            for c in 0..<3 {
-                XCTAssertNotNil(grid.cells[r][c])
+        for row in 0..<3 {
+            for col in 0..<3 {
+                XCTAssertNotNil(grid.cells[row][col])
             }
         }
     }
@@ -130,8 +130,8 @@ final class GameModelsTests: XCTestCase {
     
     func test_grid_completedRow() {
         var grid = GameGrid()
-        for c in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: 0, col: c)
+        for col in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: 0, col: col)
         }
         let lines = grid.completedLines()
         XCTAssertEqual(lines.rows, [0])
@@ -140,8 +140,8 @@ final class GameModelsTests: XCTestCase {
     
     func test_grid_completedColumn() {
         var grid = GameGrid()
-        for r in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: r, col: 0)
+        for row in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: row, col: 0)
         }
         let lines = grid.completedLines()
         XCTAssertEqual(lines.cols, [0])
@@ -150,8 +150,8 @@ final class GameModelsTests: XCTestCase {
     
     func test_grid_clearLines() {
         var grid = GameGrid()
-        for c in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: 0, col: c)
+        for col in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: 0, col: col)
         }
         let lines = grid.completedLines()
         grid.clearLines(lines)
@@ -160,9 +160,9 @@ final class GameModelsTests: XCTestCase {
     
     func test_grid_clearDoesNotAffectOtherRows() {
         var grid = GameGrid()
-        for c in 0..<GameGrid.gridSize {
-            grid.placeBlock(BlockShape.single, at: 0, col: c)
-            grid.placeBlock(BlockShape.single, at: 4, col: c)
+        for col in 0..<GameGrid.gridSize {
+            grid.placeBlock(BlockShape.single, at: 0, col: col)
+            grid.placeBlock(BlockShape.single, at: 4, col: col)
         }
         let lines = grid.completedLines()
         grid.clearLines(lines)
@@ -193,9 +193,9 @@ final class GameModelsTests: XCTestCase {
     func test_hand_noValidMoves_fullGrid() {
         let hand = BlockHand.generate()
         var grid = GameGrid()
-        for r in 0..<GameGrid.gridSize {
-            for c in 0..<GameGrid.gridSize {
-                grid.placeBlock(BlockShape.single, at: r, col: c)
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: row, col: col)
             }
         }
         XCTAssertFalse(hand.hasValidMoves(on: grid))
