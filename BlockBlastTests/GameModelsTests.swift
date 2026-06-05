@@ -206,4 +206,32 @@ final class GameModelsTests: XCTestCase {
         let ids = Set(hand.blocks.map(\.id))
         XCTAssertEqual(ids.count, 3, "All blocks should have unique IDs")
     }
+
+    /// Regression: a piece that fits only after rotation must keep the game
+    /// alive, since the player can rotate before placing. The board below has
+    /// no 3-wide horizontal gap, but a vertical 3-cell gap in column 0; a
+    /// horizontal 1x3 bar is unplaceable as-is but fits when rotated.
+    func test_hand_hasValidMoves_whenOnlyRotatedPlacementFits() {
+        var grid = GameGrid()
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize {
+                grid.placeBlock(BlockShape.single, at: row, col: col)
+            }
+        }
+        // Carve a vertical 3-cell gap in column 0 (rows 0-2).
+        grid.cells[0][0] = nil
+        grid.cells[1][0] = nil
+        grid.cells[2][0] = nil
+
+        let horizontalBar = BlockShape.bar1x3H // 3 wide, 1 tall
+        XCTAssertFalse(
+            grid.canPlace(horizontalBar, at: 0, col: 0),
+            "Horizontal bar must not fit as-is — there is no 3-wide gap"
+        )
+        let hand = BlockHand(blocks: [horizontalBar])
+        XCTAssertTrue(
+            hand.hasValidMoves(on: grid),
+            "Game must stay alive: the bar fits in the vertical gap once rotated"
+        )
+    }
 }

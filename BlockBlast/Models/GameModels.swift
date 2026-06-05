@@ -31,6 +31,23 @@ struct BlockShape: Identifiable {
         let normalized = rotated.map { (row: $0.row - minRow, col: $0.col - minCol) }
         return BlockShape(id: id, cells: normalized, color: color)
     }
+
+    /// The unique orientations reachable by rotating this block (1 to 4 of
+    /// them — symmetric shapes like squares or single cells collapse to fewer).
+    /// Used so move-availability checks match what the player can actually do
+    /// with the rotate control.
+    var distinctRotations: [BlockShape] {
+        var result: [BlockShape] = []
+        var current = self
+        for _ in 0..<4 {
+            let key = current.cells.map { "\($0.row),\($0.col)" }.joined(separator: ";")
+            if !result.contains(where: { $0.cells.map { "\($0.row),\($0.col)" }.joined(separator: ";") == key }) {
+                result.append(current)
+            }
+            current = current.rotated()
+        }
+        return result
+    }
 }
 
 // MARK: - Predefined Block Shapes
@@ -253,11 +270,17 @@ struct BlockHand: Identifiable {
         return false
     }
     
+    /// A block counts as placeable if it fits in *any* of its rotations, since
+    /// the player can rotate a piece before placing it. Checking only the
+    /// current orientation would end the game while a rotated move is still
+    /// available.
     private func canPlaceAnywhere(_ block: BlockShape, on grid: GameGrid) -> Bool {
-        for row in 0..<GameGrid.gridSize {
-            for col in 0..<GameGrid.gridSize {
-                if grid.canPlace(block, at: row, col: col) {
-                    return true
+        for rotation in block.distinctRotations {
+            for row in 0..<GameGrid.gridSize {
+                for col in 0..<GameGrid.gridSize {
+                    if grid.canPlace(rotation, at: row, col: col) {
+                        return true
+                    }
                 }
             }
         }
