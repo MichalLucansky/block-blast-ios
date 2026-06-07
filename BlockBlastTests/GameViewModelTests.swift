@@ -247,8 +247,44 @@ final class GameViewModelTests: XCTestCase {
         // The row should have been cleared already
     }
     
+    /// Regression: placing a block that completes lines must not end the game when
+    /// clearing those lines would re-open room for a remaining block. The clear is
+    /// deferred for the animation, so game-over has to be evaluated against the
+    /// *post-clear* grid — not the still-full grid at placement time.
+    func test_placeBlock_clearingLinesReopensRoom_doesNotEndGame() {
+        // Fill the entire board except the top-left corner.
+        var grid = GameGrid()
+        for row in 0..<GameGrid.gridSize {
+            for col in 0..<GameGrid.gridSize where !(row == 0 && col == 0) {
+                grid.placeBlock(BlockShape.single, at: row, col: col)
+            }
+        }
+        viewModel.grid = grid
+
+        // Two single blocks: placing the first into the corner completes lines and
+        // clears the board; the second then clearly has somewhere to go.
+        let placed = BlockShape(cells: [(0, 0)], color: .yellow)
+        let remaining = BlockShape(cells: [(0, 0)], color: .blue)
+        viewModel.hand = BlockHand(blocks: [placed, remaining])
+
+        viewModel.selectBlock(placed)
+        viewModel.tapGridCell(row: 0, col: 0)
+
+        // Game must stay playing right after placement (clear is still pending)...
+        XCTAssertEqual(viewModel.status, .playing, "Game ended before lines were cleared")
+
+        // ...and after the deferred clear runs, with room re-opened.
+        let cleared = expectation(description: "lines cleared")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { cleared.fulfill() }
+        wait(for: [cleared], timeout: 1.0)
+
+        XCTAssertEqual(viewModel.status, .playing, "Game over despite cleared room")
+        XCTAssertFalse(viewModel.showGameOver)
+        XCTAssertTrue(viewModel.hand.hasValidMoves(on: viewModel.grid))
+    }
+
     // MARK: - Game over
-    
+
     func test_endGame_setsGameOver() {
         viewModel.endGame()
         XCTAssertEqual(viewModel.status, .gameOver)
