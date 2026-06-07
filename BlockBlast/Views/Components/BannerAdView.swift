@@ -1,23 +1,15 @@
 import SwiftUI
-import GoogleMobileAds
+import AdMobKit
 
-/// A fixed-size AdMob banner wrapped for SwiftUI, sized to the standard
-/// 320x50 banner so it can sit in a normal layout flow.
-struct BannerAdView: UIViewRepresentable {
-    var adUnitID: String = AdManager.bannerAdUnitID
-
-    func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: AdSizeBanner)
-        banner.adUnitID = adUnitID
-        banner.rootViewController = AdManager.rootViewController
-        banner.load(Request())
-        return banner
+/// AdMob banner wrapped for SwiftUI, sized to the standard 320x50 format so it
+/// can sit in a normal layout flow.
+struct BannerAdView: View {
+    var body: some View {
+        AdMobKit.BannerAdView()
+            .frame(width: 320, height: 50)
     }
-
-    func updateUIView(_ uiView: BannerView, context: Context) {}
 }
 
 #Preview {
     BannerAdView()
-        .frame(width: 320, height: 50)
 }
