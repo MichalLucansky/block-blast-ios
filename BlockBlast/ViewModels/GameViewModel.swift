@@ -163,7 +163,12 @@ final class GameViewModel: ObservableObject {
         // Check for completed lines
         let lines = grid.completedLines()
         let totalLines = lines.rows.count + lines.cols.count
-        
+
+        // Remove placed block from hand
+        hand = BlockHand(blocks: hand.blocks.filter { $0.id != block.id })
+        selectedBlock = nil
+        previewPosition = nil
+
         if totalLines > 0 {
             combo += 1
             let lineScore = totalLines * GameGrid.gridSize + (combo > 1 ? combo * 5 : 0)
@@ -172,43 +177,41 @@ final class GameViewModel: ObservableObject {
             if combo > 1 {
                 storage.updateMaxCombo(combo)
             }
-            
+
             // Trigger line clear animation
             linesClearedThisRound = Set(lines.rows + lines.cols.map { $0 + 100 })
             showLineClearAnimation = true
-            
-            // Clear lines after animation
+
+            // Clear lines after animation, then evaluate game-over against the
+            // *cleared* grid — clearing lines can re-open space for a move, so
+            // checking before the clear would end the game prematurely.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-                self?.grid.clearLines(lines)
-                self?.showLineClearAnimation = false
-                self?.linesClearedThisRound = []
-            }
-        }
-        
-        // Remove placed block from hand
-        hand = BlockHand(blocks: hand.blocks.filter { $0.id != block.id })
-        selectedBlock = nil
-        previewPosition = nil
-        
-        // If hand is empty, generate new hand
-        if hand.blocks.isEmpty {
-            hand = BlockHand.generate()
-            // Check if any new blocks can be placed
-            if !hand.hasValidMoves(on: grid) {
-                endGame()
+                guard let self else { return }
+                self.grid.clearLines(lines)
+                self.showLineClearAnimation = false
+                self.linesClearedThisRound = []
+                self.evaluateAfterPlacement()
             }
         } else {
-            // Check if remaining blocks can be placed
-            if !hand.hasValidMoves(on: grid) {
-                endGame()
-            }
+            evaluateAfterPlacement()
         }
-        
+
         // Update high score
         if score > storage.highScore {
             newHighScore = true
         }
         storage.updateHighScore(score)
+    }
+
+    /// Refills the hand when empty and ends the game if no remaining block has a
+    /// valid move. Must be called against the post-clear grid (see `placeBlock`).
+    private func evaluateAfterPlacement() {
+        if hand.blocks.isEmpty {
+            hand = BlockHand.generate()
+        }
+        if !hand.hasValidMoves(on: grid) {
+            endGame()
+        }
     }
     
     func cancelPlacement() {
