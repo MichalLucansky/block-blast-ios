@@ -16,7 +16,8 @@ packages:
     url: https://github.com/hmlongco/Factory
     from: "3.0.4"
   AdMobKit:
-    path: ../admob-kit
+    url: https://github.com/MichalLucansky/admob-kit.git
+    from: "1.0.0"
 
 targets:
   BlockBlast:
