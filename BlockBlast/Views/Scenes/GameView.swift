@@ -60,6 +60,7 @@ struct GameView: View {
                 .background(Color.orange.opacity(0.2))
                 .cornerRadius(8)
                 .opacity(viewModel.combo > 1 ? 1 : 0)
+                .accessibilityHidden(viewModel.combo <= 1)
                 .padding(.top, 8)
 
                 Spacer(minLength: 8)
