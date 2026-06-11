@@ -18,7 +18,7 @@ struct StatsView: View {
                     ], spacing: 16) {
                         StatCard(title: "GAMES PLAYED", value: "\(viewModel.gamesPlayed)", icon: "gamecontroller.fill", color: .blue)
                         StatCard(title: "BLOCKS PLACED", value: "\(viewModel.totalBlocksPlaced)", icon: "square.fill", color: .green)
-                        StatCard(title: "LINES CLEARED", value: "\(viewModel.totalLinesCleared)", icon: "sparkles.fill", color: .purple)
+                        StatCard(title: "LINES CLEARED", value: "\(viewModel.totalLinesCleared)", icon: "sparkles", color: .purple)
                         StatCard(title: "MAX COMBO", value: "x\(viewModel.maxCombo)", icon: "flame.fill", color: .red)
                     }
                     
