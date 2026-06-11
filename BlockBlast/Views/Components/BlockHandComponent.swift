@@ -15,6 +15,11 @@ struct BlockHandComponent: View {
                     }
             }
         }
+        // Fixed footprint: the hand is briefly empty while a line-clear
+        // animation defers the refill, and without a reserved height the
+        // whole layout (board included) would collapse and re-expand.
+        .frame(maxWidth: .infinity)
+        .frame(height: 80)
         .padding(.vertical, 8)
         .background(Color(.systemGray6))
         .cornerRadius(12)

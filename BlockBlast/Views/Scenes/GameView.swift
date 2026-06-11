@@ -43,24 +43,24 @@ struct GameView: View {
                 .padding(.horizontal)
                 .padding(.top)
 
-                // Combo indicator
-                if viewModel.combo > 1 {
-                    HStack(spacing: 4) {
-                        Text("COMBO")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                        Text("x\(viewModel.combo)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.orange)
-                    }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 12)
-                    .background(Color.orange.opacity(0.2))
-                    .cornerRadius(8)
-                    .transition(.scale.combined(with: .opacity))
-                    .padding(.top, 8)
+                // Combo indicator — like the rotate button below, it always
+                // occupies its slot and only toggles visibility, so scoring a
+                // combo never reflows (and visually jolts) the board.
+                HStack(spacing: 4) {
+                    Text("COMBO")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                    Text("x\(viewModel.combo)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
                 }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 12)
+                .background(Color.orange.opacity(0.2))
+                .cornerRadius(8)
+                .opacity(viewModel.combo > 1 ? 1 : 0)
+                .padding(.top, 8)
 
                 Spacer(minLength: 8)
 
