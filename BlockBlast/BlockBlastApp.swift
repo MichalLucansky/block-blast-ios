@@ -1,13 +1,11 @@
 import SwiftUI
-import FactoryKit
+import AdMobKit
 
 @main
 struct BlockBlastApp: App {
-    @Injected(\.adManager) private var adManager: AdManager
-
     init() {
         // Start the Google Mobile Ads SDK and preload the first rewarded ad.
-        adManager.start()
+        AdService.shared.start(config: AdConfig.test)
     }
 
     var body: some Scene {

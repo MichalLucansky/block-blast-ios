@@ -15,9 +15,9 @@ packages:
   Factory:
     url: https://github.com/hmlongco/Factory
     from: "3.0.4"
-  GoogleMobileAds:
-    url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
-    from: "12.0.0"
+  AdMobKit:
+    url: https://github.com/MichalLucansky/admob-kit.git
+    from: "1.0.0"
 
 targets:
   BlockBlast:
@@ -31,8 +31,8 @@ targets:
     dependencies:
       - package: Factory
         product: FactoryKit
-      - package: GoogleMobileAds
-        product: GoogleMobileAds
+      - package: AdMobKit
+        product: AdMobKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lucansky.blockblast

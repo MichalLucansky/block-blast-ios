@@ -1,9 +1,9 @@
 import SwiftUI
+import AdMobKit
 import FactoryKit
 
 struct GameView: View {
     @StateObject private var viewModel = Container.shared.gameViewModel()
-    @InjectedObject(\.adManager) private var adManager: AdManager
 
     var body: some View {
         // A single top-level GeometryReader gives us the real, device-specific
@@ -136,9 +136,9 @@ struct GameView: View {
                 GameOverOverlay(
                     score: viewModel.score,
                     newHighScore: viewModel.newHighScore,
-                    canWatchAd: viewModel.canRevive && adManager.isRewardedAdReady,
+                    canWatchAd: viewModel.canRevive && AdService.shared.isRewardedAdReady,
                     onWatchAd: {
-                        adManager.showRewardedAd {
+                        AdService.shared.showRewardedAd {
                             viewModel.revive()
                         }
                     },

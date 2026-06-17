@@ -18,15 +18,15 @@ Build and test from the CLI (a `BlockBlast` scheme is generated; `xcbeautify` is
 
 ```bash
 # Build
-xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build | xcbeautify
+xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build | xcbeautify
 
 # Run all tests
-xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 16 Pro' test | xcbeautify
+xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test | xcbeautify
 
 # Run a single test class or method
-xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -only-testing:BlockBlastTests/GameViewModelTests test | xcbeautify
-xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+xcodebuild -scheme BlockBlast -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -only-testing:BlockBlastTests/GameViewModelTests/testPlaceBlock test | xcbeautify
 ```
 

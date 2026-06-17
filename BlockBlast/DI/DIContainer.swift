@@ -17,10 +17,4 @@ extension Container {
         self { StatsViewModel() }
             .singleton
     }
-
-    @MainActor
-    var adManager: Factory<AdManager> {
-        self { AdManager() }
-            .singleton
-    }
 }
