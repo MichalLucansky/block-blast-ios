@@ -4,17 +4,24 @@ struct BlockHandComponent: View {
     let hand: BlockHand
     let selectedBlock: BlockShape?
     let onSelect: (BlockShape) -> Void
-    
+
+    /// Height of the slot row; also caps each preview so they stay aligned.
+    private let slotHeight: CGFloat = 80
+
     var body: some View {
         HStack(spacing: 20) {
             ForEach(hand.blocks) { block in
                 BlockPreview(block: block, isSelected: selectedBlock?.id == block.id)
-                    .frame(maxWidth: .infinity, maxHeight: 80)
+                    .frame(maxWidth: .infinity, maxHeight: slotHeight)
                     .onTapGesture {
                         onSelect(block)
                     }
             }
         }
+        // Fixed footprint so the surrounding layout (board included) never
+        // reflows with the hand's contents — even if the hand were ever empty.
+        .frame(maxWidth: .infinity)
+        .frame(height: slotHeight)
         .padding(.vertical, 8)
         .background(Color(.systemGray6))
         .cornerRadius(12)

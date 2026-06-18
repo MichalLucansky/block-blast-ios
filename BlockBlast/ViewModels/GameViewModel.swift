@@ -164,8 +164,13 @@ final class GameViewModel: ObservableObject {
         let lines = grid.completedLines()
         let totalLines = lines.rows.count + lines.cols.count
 
-        // Remove placed block from hand
+        // Remove placed block from hand. Refill immediately when it empties —
+        // generation doesn't depend on the grid, and deferring it alongside a
+        // line clear would leave the hand visibly empty for the animation.
         hand = BlockHand(blocks: hand.blocks.filter { $0.id != block.id })
+        if hand.blocks.isEmpty {
+            hand = BlockHand.generate()
+        }
         selectedBlock = nil
         previewPosition = nil
 
@@ -203,12 +208,9 @@ final class GameViewModel: ObservableObject {
         storage.updateHighScore(score)
     }
 
-    /// Refills the hand when empty and ends the game if no remaining block has a
-    /// valid move. Must be called against the post-clear grid (see `placeBlock`).
+    /// Ends the game if no block in the hand has a valid move. Must be called
+    /// against the post-clear grid (see `placeBlock`).
     private func evaluateAfterPlacement() {
-        if hand.blocks.isEmpty {
-            hand = BlockHand.generate()
-        }
         if !hand.hasValidMoves(on: grid) {
             endGame()
         }
